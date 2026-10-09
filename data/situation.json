@@ -40,7 +40,15 @@
 "positions": {
 "1": 42,
 "3": 69
+},
+"recrutementsDetail": [
+{
+"count": 11,
+"source": "SIRH",
+"expectedDate": null,
+"reference": "Projection de croissance du classeur"
 }
+]
 },
 "SN3": {
 "label": "Ammar – SN3",
@@ -54,7 +62,8 @@
 "externes": 0,
 "positions": {
 "RDC": 43
-}
+},
+"recrutementsDetail": []
 },
 "AMMAR AUTRES": {
 "label": "Ammar – autres",
@@ -68,7 +77,8 @@
 "externes": 0,
 "positions": {
 "1": 97
-}
+},
+"recrutementsDetail": []
 },
 "AGAL": {
 "label": "Boubaker",
@@ -82,7 +92,8 @@
 "externes": 0,
 "positions": {
 "1": 136
-}
+},
+"recrutementsDetail": []
 },
 "Z": {
 "label": "Zeineb",
@@ -96,7 +107,8 @@
 "externes": 0,
 "positions": {
 "2": 259
-}
+},
+"recrutementsDetail": []
 },
 "AMINE": {
 "label": "Amine",
@@ -111,7 +123,8 @@
 "positions": {
 "3": 199,
 "4": 2
-}
+},
+"recrutementsDetail": []
 },
 "OMEA": {
 "label": "Béji – OMEA",
@@ -125,7 +138,8 @@
 "externes": 0,
 "positions": {
 "4": 23
-}
+},
+"recrutementsDetail": []
 },
 "PFS": {
 "label": "Béji – PFS",
@@ -139,7 +153,15 @@
 "externes": 1,
 "positions": {
 "4": 34
+},
+"recrutementsDetail": [
+{
+"count": 10,
+"source": "SIRH",
+"expectedDate": null,
+"reference": "Projection de croissance du classeur"
 }
+]
 },
 "BEJI AUTRES": {
 "label": "Béji – autres",
@@ -154,7 +176,15 @@
 "positions": {
 "RDC": 60,
 "4": 67
+},
+"recrutementsDetail": [
+{
+"count": 10,
+"source": "SIRH",
+"expectedDate": null,
+"reference": "Projection de croissance du classeur"
 }
+]
 },
 "SUP": {
 "label": "Fonctions support",
@@ -172,7 +202,8 @@
 "2": 12,
 "3": 1,
 "4": 67
-}
+},
+"recrutementsDetail": []
 }
 },
 "vides": {
@@ -22750,6 +22781,54 @@
 "t": "wall"
 }
 ]
+}
+},
+"hypotheses": {
+"asOf": "2026-09-30",
+"rules": {
+"equity": "quota(direction) = positions à répartir × effectif cible / somme des effectifs cibles, arrondi au plus fort reste",
+"targetHeadcount": "CDI + consultants externes + recrutements retenus",
+"supportInEquation": false,
+"teleworkHypothesis": "uniform",
+"recruitmentRule": "recrutements ouverts dans le SIRH ou déclarés officiellement par le client par mail sur recruitWindowMonths",
+"recruitWindowMonths": 3,
+"reservePct": 0,
+"maxFloorsPerDirection": 2
+},
+"zonesToFree": [
+{
+"floor": "RDC",
+"label": "Salle de formation",
+"cells": "free",
+"positions": 39,
+"reason": "zone occupée par BLI, libérée pour la salle de formation"
+}
+],
+"directions": {
+"AMMAR": {
+"label": "Ammar",
+"inEquation": true
+},
+"BOUBAKER": {
+"label": "Boubaker",
+"inEquation": true
+},
+"ZEINEB": {
+"label": "Zeineb",
+"inEquation": true
+},
+"AMINE": {
+"label": "Amine",
+"inEquation": true
+},
+"BEJI": {
+"label": "Béji",
+"inEquation": true
+},
+"SUPPORT": {
+"label": "Fonctions support",
+"inEquation": false
+}
 }
 }
 }

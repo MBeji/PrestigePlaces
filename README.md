@@ -38,3 +38,25 @@ positions à répartir = toutes les positions hors fonctions support, moins la r
 ```
 
 Les quotas sont arrondis au plus fort reste. La répartition par niveau est un flot à coût minimal (au plus un nouveau niveau par direction), puis les positions sont choisies au bord des équipes qui cèdent et au plus près des équipes qui reprennent. La version cible décrite dans l'étude utilise un solveur CP-SAT (OR-Tools).
+
+## Pilotage par l'IA
+
+Le projet est conçu pour être géré de bout en bout par Claude Code : `CLAUDE.md` porte les règles métier et les conventions, `.claude/` porte le harnais.
+
+| Élément | Rôle |
+| --- | --- |
+| `data/hypotheses.json` | Source unique des hypothèses (effectifs, externes, recrutements, réserve, zones à libérer). Une instruction donnée en session se traduit par une modification de ce fichier |
+| `.claude/hooks/on-hypotheses-change.sh` | À chaque modification de `data/hypotheses.json` : régénère `data/situation.json`, reconstruit la maquette, réensemence l'application |
+| `.claude/hooks/session-start.sh` | Installe les dépendances de l'application et prépare la base en session cloud |
+| `.claude/skills/` | `/hypotheses` (appliquer une hypothèse), `/maquette` (reconstruire et republier), `/etude` (mettre à jour l'étude), `/lot` (lancer un lot d'implémentation), `/steward` (conduite des PR) |
+| `.claude/agents/` | Agents spécialisés avec routage de modèle : `engine-dev` et `qa-reviewer` (opus), `ui-dev` et `data-dev` (sonnet), `doc-writer` (haiku) |
+| `.claude/workflows/` | Workflows multi-agents : `lot1-implementation.js`, `apply-hypotheses.js`, `review-changes.js` |
+| `.github/workflows/ci.yml` | CI : régénération depuis les hypothèses, logique de la maquette, lint, typecheck, tests et build de l'application |
+
+Appliquer une hypothèse à la main :
+
+```bash
+# modifier data/hypotheses.json, puis
+python3 -I scripts/apply_hypotheses.py        # situation.json + maquette, affiche les quotas
+node scripts/test_prototype.js prototype/index.html
+```

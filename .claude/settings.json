@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit(app/**)", "Edit(data/**)", "Edit(docs/**)", "Edit(prototype/**)", "Edit(scripts/**)", "Edit(.claude/**)", "Edit(.github/**)", "Edit(README.md)", "Edit(CLAUDE.md)", "Edit(.gitignore)",
+      "Bash(npm run *)", "Bash(npm test*)", "Bash(npm install*)", "Bash(npm ci*)", "Bash(npm view *)", "Bash(npm ls*)",
+      "Bash(npx prisma *)", "Bash(npx playwright test*)", "Bash(npx tsc *)", "Bash(npx vitest *)", "Bash(npx eslint *)", "Bash(npx next *)",
+      "Bash(node *)", "Bash(python3 *)",
+      "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git add *)", "Bash(git commit *)", "Bash(git push *)", "Bash(git fetch *)", "Bash(git pull *)", "Bash(git checkout *)", "Bash(git branch*)", "Bash(git ls-remote*)", "Bash(git stash*)",
+      "Bash(ls *)", "Bash(cat *)", "Bash(head *)", "Bash(tail *)", "Bash(wc *)", "Bash(grep *)", "Bash(find *)", "Bash(sed -n *)", "Bash(mkdir *)", "Bash(cp *)", "Bash(mv *)", "Bash(chmod +x *)", "Bash(jq *)", "Bash(curl -s *)",
+      "WebFetch(domain:nextjs.org)", "WebFetch(domain:www.prisma.io)", "WebFetch(domain:next-auth.js.org)", "WebFetch(domain:developers.google.com)", "WebFetch(domain:cdnjs.cloudflare.com)"
+    ],
+    "deny": [
+      "Read(./app/.env)", "Read(./app/.env.local)", "Edit(./app/.env)",
+      "Bash(rm -rf /*)", "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git reset --hard*)", "Bash(npx playwright install*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh", "timeout": 900, "statusMessage": "Préparation de l'environnement PrestigePlaces" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/on-hypotheses-change.sh", "timeout": 300, "statusMessage": "Application des hypothèses (maquette, base)" }
+        ]
+      }
+    ]
+  }
+}

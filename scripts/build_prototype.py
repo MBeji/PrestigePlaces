@@ -7,7 +7,7 @@ import json
 import sys
 
 data = json.load(open(sys.argv[1], encoding='utf-8'))
-slim = {'source': data['source'], 'groups': data['groups'], 'floors': {}}
+slim = {'source': data['source'], 'groups': data['groups'], 'hypotheses': data.get('hypotheses', {}), 'floors': {}}
 for f, fl in data['floors'].items():
     slim['floors'][f] = {'label': fl['label'], 'cells': [c for c in fl['cells'] if c['t'] in ('seat', 'wall', 'office', 'room', 'green', 'free', 'free_m')]}
 template = open(sys.argv[2], encoding='utf-8').read()

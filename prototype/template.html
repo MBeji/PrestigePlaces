@@ -331,7 +331,8 @@ function propose(seats, params, reservePct) {
 
 // ---------- état et rendu ----------
 const BASE = baseHeadcount();
-const state = { params: JSON.parse(JSON.stringify(BASE)), reserve: 0, floor: '3', view: 'proposed', seats: [], result: null };
+const H = DATA.hypotheses || {}; const RULES = H.rules || {};
+const state = { params: JSON.parse(JSON.stringify(BASE)), reserve: Number(RULES.reservePct || 0), floor: '3', view: 'proposed', seats: [], result: null };
 
 function recompute() {
   state.seats = buildSeats(false);
@@ -464,6 +465,8 @@ document.getElementById('reset').addEventListener('click', () => {
   recompute();
 });
 try { const saved = localStorage.getItem('pp-floor'); if (saved && FLOORS.includes(saved)) state.floor = saved; } catch (e) {}
+document.getElementById('reserve').value = String(state.reserve);
+if (RULES.recruitWindowMonths) document.getElementById('horizon').value = String(RULES.recruitWindowMonths);
 recompute();
 document.getElementById('floor-tabs').addEventListener('click', () => { try { localStorage.setItem('pp-floor', state.floor); } catch (e) {} });
 </script>

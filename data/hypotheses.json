@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "asOf": "2026-09-30",
+  "site": "Tunis",
+  "source": "Situation_7_09_OCT_2026.xlsx — effectifs Tunis au 30/09/2026 (hors stagiaires, nettoyage, sécurité)",
+  "rules": {
+    "equity": "quota(direction) = positions à répartir × effectif cible / somme des effectifs cibles, arrondi au plus fort reste",
+    "targetHeadcount": "CDI + consultants externes + recrutements retenus",
+    "supportInEquation": false,
+    "teleworkHypothesis": "uniform",
+    "recruitmentRule": "recrutements ouverts dans le SIRH ou déclarés officiellement par le client par mail sur recruitWindowMonths",
+    "recruitWindowMonths": 3,
+    "reservePct": 0,
+    "maxFloorsPerDirection": 2
+  },
+  "zonesToFree": [
+    {
+      "floor": "RDC",
+      "label": "Salle de formation",
+      "cells": "free",
+      "positions": 39,
+      "reason": "zone occupée par BLI, libérée pour la salle de formation"
+    }
+  ],
+  "directions": {
+    "AMMAR": {
+      "label": "Ammar",
+      "inEquation": true,
+      "groups": {
+        "BLI": {
+          "label": "Ammar – BLI",
+          "cdi": {
+            "d": 0,
+            "m": 1,
+            "c": 90
+          },
+          "externes": 0,
+          "recrutements": [
+            {
+              "count": 11,
+              "source": "SIRH",
+              "expectedDate": null,
+              "reference": "Projection de croissance du classeur"
+            }
+          ]
+        },
+        "SN3": {
+          "label": "Ammar – SN3",
+          "cdi": {
+            "d": 0,
+            "m": 4,
+            "c": 50
+          },
+          "externes": 0,
+          "recrutements": []
+        },
+        "AMMAR AUTRES": {
+          "label": "Ammar – autres",
+          "cdi": {
+            "d": 1,
+            "m": 4,
+            "c": 99
+          },
+          "externes": 0,
+          "recrutements": []
+        }
+      }
+    },
+    "BOUBAKER": {
+      "label": "Boubaker",
+      "inEquation": true,
+      "groups": {
+        "AGAL": {
+          "label": "Boubaker",
+          "cdi": {
+            "d": 1,
+            "m": 9,
+            "c": 164
+          },
+          "externes": 0,
+          "recrutements": []
+        }
+      }
+    },
+    "ZEINEB": {
+      "label": "Zeineb",
+      "inEquation": true,
+      "groups": {
+        "Z": {
+          "label": "Zeineb",
+          "cdi": {
+            "d": 1,
+            "m": 12,
+            "c": 362
+          },
+          "externes": 0,
+          "recrutements": []
+        }
+      }
+    },
+    "AMINE": {
+      "label": "Amine",
+      "inEquation": true,
+      "groups": {
+        "AMINE": {
+          "label": "Amine",
+          "cdi": {
+            "d": 1,
+            "m": 17,
+            "c": 230
+          },
+          "externes": 0,
+          "recrutements": []
+        }
+      }
+    },
+    "BEJI": {
+      "label": "Béji",
+      "inEquation": true,
+      "groups": {
+        "OMEA": {
+          "label": "Béji – OMEA",
+          "cdi": {
+            "d": 0,
+            "m": 0,
+            "c": 24
+          },
+          "externes": 0,
+          "recrutements": []
+        },
+        "PFS": {
+          "label": "Béji – PFS",
+          "cdi": {
+            "d": 0,
+            "m": 3,
+            "c": 67
+          },
+          "externes": 1,
+          "recrutements": [
+            {
+              "count": 10,
+              "source": "SIRH",
+              "expectedDate": null,
+              "reference": "Projection de croissance du classeur"
+            }
+          ]
+        },
+        "BEJI AUTRES": {
+          "label": "Béji – autres",
+          "cdi": {
+            "d": 1,
+            "m": 7,
+            "c": 144
+          },
+          "externes": 10,
+          "recrutements": [
+            {
+              "count": 10,
+              "source": "SIRH",
+              "expectedDate": null,
+              "reference": "Projection de croissance du classeur"
+            }
+          ]
+        }
+      }
+    },
+    "SUPPORT": {
+      "label": "Fonctions support",
+      "inEquation": false,
+      "groups": {
+        "SUP": {
+          "label": "Fonctions support",
+          "cdi": {
+            "d": 0,
+            "m": 0,
+            "c": 78
+          },
+          "externes": 0,
+          "recrutements": []
+        }
+      }
+    }
+  }
+}
