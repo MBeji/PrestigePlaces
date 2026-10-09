@@ -34,6 +34,7 @@ Suivre le skill `/hypotheses` : modifier `data/hypotheses.json` (jamais `situati
 ## Vérifications avant tout commit
 
 ```bash
+python3 -I scripts/check_privacy.py               # aucune donnée personnelle ni secret dans les fichiers suivis
 python3 -I scripts/apply_hypotheses.py            # régénère situation.json + maquette, affiche les quotas
 node scripts/test_prototype.js prototype/index.html # logique de la maquette (quotas, mouvements)
 cd app && npm run lint && npm run typecheck && npm test && npm run build   # application, si app/ existe
@@ -44,7 +45,7 @@ Résultats de référence (hypothèses du 30/09/2026) : quotas AMMAR 204, BOUBAK
 ## Conventions
 
 - Interface, documentation et messages de commit en français. Code TypeScript strict, Python sans dépendance hors `openpyxl`.
-- Aucune donnée nominative dans le dépôt : pas de classeur RH (`*.xlsx` ignoré), pas de noms dans `data/`. L'import RH tourne dans l'application, pas dans git.
+- Aucune donnée personnelle ni secret d'entreprise dans le projet ni dans git : pas de classeur RH (`*.xlsx`, `*.csv` ignorés), pas de nom, matricule, e-mail ou date individuelle, pas de clé ni de mot de passe. Autorisés : prénoms des directeurs, noms des projets et des équipes. `python3 -I scripts/check_privacy.py` le vérifie (CI et avant commit). L'import RH tourne dans l'application, pas dans git.
 - Ne jamais commiter `app/.env`, `app/dev.db`, `node_modules`, `.next`.
 - Commits petits et descriptifs ; la branche de travail est celle de la session ; pousser après chaque étape vérifiée.
 - Les figures de l'étude (tableaux, graphiques) doivent rester cohérentes avec `data/hypotheses.json` : après un changement d'hypothèse, mettre à jour la section Analyse et la synthèse.

@@ -75,7 +75,18 @@ svg.plan { display: block; width: 100%; max-width: 820px; height: auto; margin: 
 .moves li .n { font-family: var(--mono); min-width: 34px; text-align: right; }
 .arrow { color: var(--fg-2); }
 .foot { max-width: 1280px; margin: 14px auto 0; color: var(--fg-2); font-size: 12.5px; }
-@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .results-grid { grid-template-columns: 1fr; } }
+.panel.panel3d { grid-column: 1 / -1; }
+.grid3d { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+#scene { position: relative; width: 100%; height: 540px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface-2); touch-action: none; cursor: grab; }
+#scene:active { cursor: grabbing; }
+#scene canvas { display: block; position: absolute; inset: 0; z-index: 1; }
+#labels { position: absolute; inset: 0; pointer-events: none; z-index: 2; overflow: hidden; }
+.lbl { position: absolute; transform: translate(-50%, -100%); background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 11px; line-height: 1.5; white-space: nowrap; font-family: var(--mono); box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+.lbl.floor { font-family: var(--font); font-weight: 600; font-size: 12.5px; background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.lbl .sw { width: 8px; height: 8px; margin-right: 3px; }
+#floor-table td.c { text-align: right; white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
+#floor-table th.c { text-align: right; white-space: nowrap; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .results-grid { grid-template-columns: 1fr; } .grid3d { grid-template-columns: 1fr; } #scene { height: 380px; } }
 @media (prefers-reduced-motion: no-preference) { .tab, .seg button, .btn { transition: background 120ms, color 120ms; } }
 </style>
 
@@ -118,6 +129,25 @@ svg.plan { display: block; width: 100%; max-width: 820px; height: auto; margin: 
     <div class="info" id="info">Survolez une position pour voir son détail.</div>
   </section>
 
+  <section class="panel panel3d" aria-labelledby="h-3d">
+    <div class="row">
+      <div><h2 id="h-3d">Vue 3D du site</h2><p class="hint" style="margin:2px 0 0">Faites glisser pour tourner, molette ou pincement pour zoomer. Les volumes hauts sont les postes fixes ; en vue « changements », les positions qui changent sont surélevées.</p></div>
+      <div class="row" style="margin:0;gap:8px">
+        <div class="tabs" id="focus3d" role="group" aria-label="Niveau affiché"></div>
+        <div class="seg"><button type="button" id="explode3d" aria-pressed="true">Vue éclatée</button><button type="button" id="labels3d" aria-pressed="true">Étiquettes</button><button type="button" id="reset3d" aria-pressed="false">Recentrer</button></div>
+      </div>
+    </div>
+    <div class="grid3d">
+      <div><div id="scene"><div id="labels"></div></div><div class="info" id="info3d">Survolez une position dans la vue 3D pour voir son détail.</div></div>
+      <div>
+        <h3 style="font-size:14px;margin:0 0 6px">Positions par niveau et par direction</h3>
+        <div class="tablewrap"><table id="floor-table"></table></div>
+        <h3 style="font-size:14px;margin:14px 0 6px" id="h-islands">Open spaces du niveau</h3>
+        <ul class="moves" id="islands3d" style="max-height:260px"></ul>
+      </div>
+    </div>
+  </section>
+
   <section class="panel results" aria-labelledby="h-results">
     <h2 id="h-results">Proposition de dispatching</h2>
     <p class="hint">Quota = taux commun × effectif cible, arrondi au plus fort reste. La répartition par niveau minimise les nouveaux niveaux par direction (flot à coût minimal), puis choisit les positions au plus près des équipes.</p>
@@ -135,6 +165,7 @@ svg.plan { display: block; width: 100%; max-width: 820px; height: auto; margin: 
 </main>
 <p class="foot">Source : Situation_7_09_OCT_2026.xlsx (plans et effectifs Tunis, hors stagiaires, nettoyage et sécurité). Les positions des fonctions support (106) restent en place. Heuristique de maquette : la version cible utilise un solveur CP-SAT.</p>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const DATA = /*__DATA__*/;
 const DIRS = [
@@ -338,7 +369,7 @@ function recompute() {
   state.seats = buildSeats(false);
   islands(state.seats);
   state.result = propose(state.seats, state.params, state.reserve);
-  renderKpis(); renderParams(); renderPlan(); renderResults();
+  renderKpis(); renderParams(); renderPlan(); renderResults(); update3D();
 }
 function fmt(n) { return n.toLocaleString('fr-FR'); }
 function pct(x) { return (x * 100).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
@@ -456,7 +487,7 @@ function renderResults() {
   document.getElementById('moves').innerHTML = list.length ? list.map(m => `<li><span class="n">${m.n}</span><span>${FLOOR_LABEL[m.f]} · îlot ${m.i} : <span class="sw" style="background:var(--c-${cssOf(m.a)})"></span>${labelOf(m.a)} <span class="arrow">→</span> <span class="sw" style="background:var(--c-${cssOf(m.b)})"></span>${labelOf(m.b)}</span></li>`).join('') : '<li>Aucun mouvement : la situation respecte déjà les quotas.</li>';
 }
 
-document.getElementById('view-seg').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b) return; state.view = b.dataset.view; renderPlan(); });
+document.getElementById('view-seg').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b) return; state.view = b.dataset.view; renderPlan(); update3D(); });
 document.getElementById('reserve').addEventListener('input', e => { state.reserve = Math.min(20, Math.max(0, parseFloat(e.target.value || '0'))); scheduleRecompute(); });
 document.getElementById('reset').addEventListener('click', () => {
   state.params = JSON.parse(JSON.stringify(BASE)); state.reserve = 0;
@@ -464,9 +495,187 @@ document.getElementById('reset').addEventListener('click', () => {
   for (const d of DIRS) for (const k of ['cdi', 'ext', 'rec']) { const el = document.getElementById(`${k}-${d.id}`); if (el) el.value = state.params[d.id][k]; }
   recompute();
 });
+
+// ---------- vue 3D (Three.js r128, UMD) ----------
+const FLOOR_IDX = { RDC: 0, '1': 1, '2': 2, '3': 3, '4': 4 };
+const V3 = { ready: false, exploded: true, labels: true, focus: 'ALL', theta: 0.85, phi: 1.0, radius: 110, needs: true, drag: null, labelEls: [], seatIndex: [], floorY: f => FLOOR_IDX[f] * (V3.exploded ? 13 : 2.6) };
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888888';
+const dirColorHex = id => cssVar(`--c-${cssOf(id)}`);
+function init3D() {
+  const host = document.getElementById('scene');
+  if (typeof THREE === 'undefined') { host.insertAdjacentHTML('beforeend', '<p class="hint" style="padding:16px">Vue 3D indisponible : la bibliothèque 3D n’a pas pu être chargée.</p>'); return; }
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  host.insertBefore(renderer.domElement, host.firstChild);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.5, 2000);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.75); sun.position.set(40, 90, 50); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xffffff, 0.25); fill.position.set(-50, 30, -40); scene.add(fill);
+  Object.assign(V3, { ready: true, host, renderer, scene, camera, root: new THREE.Group(), ray: new THREE.Raycaster(), mouse: new THREE.Vector2(), target: new THREE.Vector3(22, 0, 19.5) });
+  scene.add(V3.root);
+  const el = renderer.domElement;
+  el.addEventListener('pointerdown', e => { V3.drag = { x: e.clientX, y: e.clientY, moved: false }; el.setPointerCapture(e.pointerId); });
+  el.addEventListener('pointermove', e => {
+    if (V3.drag) { const dx = e.clientX - V3.drag.x, dy = e.clientY - V3.drag.y; V3.drag.x = e.clientX; V3.drag.y = e.clientY; if (Math.abs(dx) + Math.abs(dy) > 1) V3.drag.moved = true; V3.theta -= dx * 0.006; V3.phi = Math.min(1.45, Math.max(0.15, V3.phi - dy * 0.005)); V3.needs = true; }
+    else hover3D(e);
+  });
+  const endDrag = () => { V3.drag = null; };
+  el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag); el.addEventListener('pointerleave', endDrag);
+  el.addEventListener('wheel', e => { e.preventDefault(); V3.radius = Math.min(260, Math.max(28, V3.radius * (e.deltaY > 0 ? 1.1 : 0.9))); V3.needs = true; }, { passive: false });
+  el.addEventListener('click', e => { if (V3.drag && V3.drag.moved) return; hover3D(e, true); });
+  document.getElementById('explode3d').addEventListener('click', e => { V3.exploded = !V3.exploded; e.currentTarget.setAttribute('aria-pressed', String(V3.exploded)); build3D(); });
+  document.getElementById('labels3d').addEventListener('click', e => { V3.labels = !V3.labels; e.currentTarget.setAttribute('aria-pressed', String(V3.labels)); placeLabels(); });
+  document.getElementById('reset3d').addEventListener('click', () => { V3.theta = 0.85; V3.phi = 1.0; V3.radius = V3.focus === 'ALL' ? 110 : 70; V3.needs = true; });
+  const focus = document.getElementById('focus3d');
+  focus.innerHTML = ['ALL', ...FLOORS].map(f => `<button class="tab" type="button" data-focus="${f}" aria-selected="${f === 'ALL'}">${f === 'ALL' ? 'Tous les niveaux' : FLOOR_LABEL[f]}</button>`).join('');
+  focus.addEventListener('click', e => { const b = e.target.closest('[data-focus]'); if (!b) return; V3.focus = b.dataset.focus; focus.querySelectorAll('[data-focus]').forEach(x => x.setAttribute('aria-selected', String(x === b))); V3.radius = V3.focus === 'ALL' ? 110 : 70; build3D(); });
+  window.addEventListener('resize', resize3D);
+  try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => build3D()); } catch (e) {}
+  try { new MutationObserver(() => build3D()).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] }); } catch (e) {}
+  resize3D();
+  build3D();
+  (function loop() { requestAnimationFrame(loop); if (!V3.needs) return; V3.needs = false; frame3D(); })();
+}
+function resize3D() {
+  if (!V3.ready) return;
+  const w = V3.host.clientWidth, h = V3.host.clientHeight;
+  V3.renderer.setSize(w, h, false); V3.camera.aspect = w / h; V3.camera.updateProjectionMatrix(); V3.needs = true;
+}
+function visibleFloors() { return V3.focus === 'ALL' ? FLOORS : [V3.focus]; }
+function build3D() {
+  if (!V3.ready) return;
+  const root = V3.root;
+  while (root.children.length) { const o = root.children.pop(); o.traverse(n => { if (n.geometry) n.geometry.dispose(); if (n.material) n.material.dispose(); }); }
+  const vis = visibleFloors();
+  const toColor = hex => new THREE.Color(hex);
+  const mat = hex => new THREE.MeshLambertMaterial({ color: toColor(hex) });
+  const flat = (cells, hex, y, h) => {
+    if (!cells.length) return null;
+    const m = new THREE.InstancedMesh(new THREE.BoxGeometry(1, h, 1), mat(hex), cells.length);
+    const o = new THREE.Object3D();
+    cells.forEach((c, i) => { o.position.set(c.x + 0.5, y + h / 2, c.z + 0.5); o.updateMatrix(); m.setMatrixAt(i, o.matrix); });
+    return m;
+  };
+  V3.labelAnchors = [];
+  for (const f of vis) {
+    const g = new THREE.Group(); const y0 = V3.floorY(f);
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(NC + 1, 0.5, NR + 1), mat(cssVar('--surface'))); slab.position.set(NC / 2, y0 - 0.25, NR / 2); g.add(slab);
+    const edge = new THREE.Mesh(new THREE.BoxGeometry(NC + 1.2, 0.08, NR + 1.2), mat(cssVar('--line'))); edge.position.set(NC / 2, y0 - 0.5, NR / 2); g.add(edge);
+    const cells = DATA.floors[f].cells.map(c => ({ ...c, x: c.c - C0, z: c.r - R0 }));
+    const walls = flat(cells.filter(c => c.t === 'wall'), cssVar('--wall'), y0, 0.35); if (walls) { walls.material.transparent = true; walls.material.opacity = 0.55; g.add(walls); }
+    const rooms = flat(cells.filter(c => c.t === 'room' || c.t === 'green'), cssVar('--room'), y0, 0.12); if (rooms) g.add(rooms);
+    const offices = flat(cells.filter(c => c.t === 'office'), cssVar('--office'), y0, 0.12); if (offices) g.add(offices);
+    const desks = flat(cells.filter(c => c.t === 'free_m' && !(f === 'RDC' && c.r === 20)), cssVar('--desk'), y0, 0.3); if (desks) g.add(desks);
+    const training = flat(cells.filter(c => c.t === 'free' || (c.t === 'free_m' && f === 'RDC' && c.r === 20)), cssVar('--fg-2'), y0, 0.1); if (training) { training.material.transparent = true; training.material.opacity = 0.25; g.add(training); }
+    g.userData.floor = f;
+    root.add(g);
+    const total = state.seats.filter(s => s.floor === f).length;
+    V3.labelAnchors.push({ kind: 'floor', pos: new THREE.Vector3(-1, y0 + 1.2, -1), text: `${FLOOR_LABEL[f]} · ${total} positions` });
+    if (f === 'RDC') V3.labelAnchors.push({ kind: 'zone', pos: new THREE.Vector3(22, y0 + 0.6, 17.5), text: 'Salle de formation · 39 positions libérées' });
+  }
+  // positions : un seul maillage instancié, couleur par instance
+  const seats = state.seats.filter(s => vis.includes(s.floor));
+  V3.seatIndex = seats;
+  const geo = new THREE.BoxGeometry(0.78, 1, 0.78); geo.translate(0, 0.5, 0);
+  const seatMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  const mesh = new THREE.InstancedMesh(geo, seatMat, Math.max(seats.length, 1));
+  V3.seatsMesh = mesh; root.add(mesh);
+  paintSeats();
+  // étiquettes d'îlots
+  const r = state.result;
+  const groups = {};
+  for (const s of seats) { const k = `${s.floor}|${s.island}`; (groups[k] ||= { floor: s.floor, island: s.island, seats: [] }).seats.push(s); }
+  for (const gI of Object.values(groups)) {
+    const cx = gI.seats.reduce((a, s) => a + s.c - C0 + 0.5, 0) / gI.seats.length, cz = gI.seats.reduce((a, s) => a + s.r - R0 + 0.5, 0) / gI.seats.length;
+    const counts = {};
+    for (const s of gI.seats) { const d = state.view === 'current' ? s.dir : r.proposed[s.id]; counts[d] = (counts[d] || 0) + 1; }
+    const html = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([d, n]) => `<span class="sw" style="background:var(--c-${cssOf(d)})"></span>${n}`).join(' ');
+    V3.labelAnchors.push({ kind: 'island', pos: new THREE.Vector3(cx, V3.floorY(gI.floor) + 2.2, cz), html, size: gI.seats.length, floor: gI.floor });
+  }
+  buildLabelEls();
+  renderFloorTable(); renderIslands3D();
+  const ys = vis.map(f => V3.floorY(f)); V3.target.set(NC / 2, (Math.min(...ys) + Math.max(...ys)) / 2 + 1, NR / 2);
+  V3.needs = true;
+}
+function paintSeats() {
+  if (!V3.ready || !V3.seatsMesh) return;
+  const r = state.result, mesh = V3.seatsMesh, o = new THREE.Object3D(), dim = new THREE.Color(cssVar('--surface-2'));
+  V3.seatIndex.forEach((s, i) => {
+    const cur = s.dir, prop = r.proposed[s.id], shown = state.view === 'current' ? cur : prop, changed = cur !== prop;
+    let h = s.fixed ? 1.9 : 1.0; if (state.view === 'changes' && changed) h += 0.9;
+    o.position.set(s.c - C0 + 0.5, V3.floorY(s.floor), s.r - R0 + 0.5); o.scale.set(1, h, 1); o.updateMatrix(); mesh.setMatrixAt(i, o.matrix);
+    const col = new THREE.Color(dirColorHex(shown));
+    if (state.view === 'changes' && !changed) col.lerp(dim, 0.75);
+    mesh.setColorAt(i, col);
+  });
+  mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+  V3.needs = true;
+}
+function buildLabelEls() {
+  const box = document.getElementById('labels'); box.innerHTML = '';
+  V3.labelEls = V3.labelAnchors.map(a => { const d = document.createElement('div'); d.className = 'lbl ' + a.kind; if (a.html) d.innerHTML = a.html; else d.textContent = a.text; box.appendChild(d); return d; });
+}
+function placeLabels() {
+  if (!V3.ready) return;
+  const w = V3.host.clientWidth, h = V3.host.clientHeight, v = new THREE.Vector3();
+  const showIslands = V3.labels && (V3.focus !== 'ALL' || V3.radius < 95);
+  V3.labelAnchors.forEach((a, i) => {
+    const el = V3.labelEls[i]; if (!el) return;
+    const on = V3.labels && (a.kind !== 'island' || (showIslands && a.size >= 4));
+    if (!on) { el.style.display = 'none'; return; }
+    v.copy(a.pos).project(V3.camera);
+    if (v.z > 1 || v.x < -1.1 || v.x > 1.1 || v.y < -1.1 || v.y > 1.1) { el.style.display = 'none'; return; }
+    el.style.display = ''; el.style.left = `${(v.x + 1) / 2 * w}px`; el.style.top = `${(1 - v.y) / 2 * h}px`;
+  });
+}
+function frame3D() {
+  const c = V3.camera, t = V3.target, r = V3.radius;
+  c.position.set(t.x + r * Math.sin(V3.phi) * Math.sin(V3.theta), t.y + r * Math.cos(V3.phi), t.z + r * Math.sin(V3.phi) * Math.cos(V3.theta));
+  c.lookAt(t);
+  V3.renderer.render(V3.scene, c);
+  placeLabels();
+}
+function hover3D(e, click) {
+  if (!V3.ready || !V3.seatsMesh) return;
+  const rect = V3.renderer.domElement.getBoundingClientRect();
+  V3.mouse.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+  V3.ray.setFromCamera(V3.mouse, V3.camera);
+  const hit = V3.ray.intersectObject(V3.seatsMesh)[0];
+  if (!hit || hit.instanceId === undefined) return;
+  const s = V3.seatIndex[hit.instanceId]; if (!s) return;
+  const prop = state.result.proposed[s.id];
+  document.getElementById('info3d').textContent = `${FLOOR_LABEL[s.floor]} · îlot ${s.island} · ${s.g} (${labelOf(s.dir)}) · ${KIND_LABEL[s.k]}${s.fixed ? ' · poste fixe' : ''}  |  ${prop !== s.dir ? 'proposition : ' + labelOf(prop) : 'inchangée'}`;
+  if (click) { state.floor = s.floor; renderPlan(); }
+}
+function renderFloorTable() {
+  const r = state.result; const cols = [...DIRS.map(d => d.id), 'VIDE', 'SUPPORT'];
+  const rows = [...FLOORS].reverse().map(f => {
+    const cells = cols.map(id => { const cur = state.seats.filter(s => s.floor === f && s.dir === id).length, prop = state.seats.filter(s => s.floor === f && r.proposed[s.id] === id).length; if (!cur && !prop) return '<td class="c"></td>'; return `<td class="c">${cur === prop ? cur : `${cur} → <b>${prop}</b>`}</td>`; }).join('');
+    const total = state.seats.filter(s => s.floor === f).length;
+    return `<tr><td>${FLOOR_LABEL[f]}</td>${cells}<td class="c"><b>${total}</b></td></tr>`;
+  }).join('');
+  const totals = cols.map(id => { const cur = state.seats.filter(s => s.dir === id).length, prop = state.seats.filter(s => r.proposed[s.id] === id).length; return `<td class="c">${cur === prop ? cur : `${cur} → <b>${prop}</b>`}</td>`; }).join('');
+  document.getElementById('floor-table').innerHTML = `<thead><tr><th>Niveau</th>${cols.map(id => `<th class="c"><span class="sw" style="background:var(--c-${cssOf(id)})"></span>${labelOf(id).replace(' (hors équation)', '')}</th>`).join('')}<th class="c">Total</th></tr></thead><tbody>${rows}<tr><td><b>Total</b></td>${totals}<td class="c"><b>${state.seats.length}</b></td></tr></tbody>`;
+}
+function renderIslands3D() {
+  const r = state.result; const vis = visibleFloors();
+  document.getElementById('h-islands').textContent = V3.focus === 'ALL' ? 'Open spaces (tous niveaux, par taille)' : `Open spaces · ${FLOOR_LABEL[V3.focus]}`;
+  const groups = {};
+  for (const s of state.seats) { if (!vis.includes(s.floor)) continue; const k = `${s.floor}|${s.island}`; (groups[k] ||= { floor: s.floor, island: s.island, cur: {}, prop: {}, n: 0 }); const g = groups[k]; g.n += 1; g.cur[s.dir] = (g.cur[s.dir] || 0) + 1; const p = r.proposed[s.id]; g.prop[p] = (g.prop[p] || 0) + 1; }
+  const list = Object.values(groups).sort((a, b) => b.n - a.n).slice(0, 40);
+  document.getElementById('islands3d').innerHTML = list.map(g => {
+    const ids = [...new Set([...Object.keys(g.cur), ...Object.keys(g.prop)])].sort((a, b) => (g.prop[b] || 0) - (g.prop[a] || 0));
+    const parts = ids.map(id => { const a = g.cur[id] || 0, b = g.prop[id] || 0; return `<span class="sw" style="background:var(--c-${cssOf(id)})"></span>${labelOf(id).replace(' (hors équation)', '')} ${a === b ? a : `${a} <span class="arrow">→</span> <b>${b}</b>`}`; }).join(' · ');
+    return `<li><span class="n">${g.n}</span><span>${FLOOR_LABEL[g.floor]} · îlot ${g.island} : ${parts}</span></li>`;
+  }).join('') || '<li>Aucun open space sur ce niveau.</li>';
+}
+function update3D() { if (!V3.ready) return; build3D(); }
+
 try { const saved = localStorage.getItem('pp-floor'); if (saved && FLOORS.includes(saved)) state.floor = saved; } catch (e) {}
 document.getElementById('reserve').value = String(state.reserve);
 if (RULES.recruitWindowMonths) document.getElementById('horizon').value = String(RULES.recruitWindowMonths);
 recompute();
+init3D();
 document.getElementById('floor-tabs').addEventListener('click', () => { try { localStorage.setItem('pp-floor', state.floor); } catch (e) {} });
 </script>

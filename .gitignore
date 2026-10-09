@@ -14,3 +14,7 @@ app/.env
 app/.env.local
 app/test-results/
 app/playwright-report/
+
+# Données brutes : jamais dans git
+*.csv
+*.tsv

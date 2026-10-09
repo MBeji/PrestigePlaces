@@ -92,6 +92,7 @@ L'application remplace le classeur par quatre modules : les plans, les données,
 - Un plan par niveau, chaque position dessinée à sa place et colorée par direction, avec filtres par direction, par groupe et par état (affectée, vide, poste fixe).
 - Info-bulle sur chaque position : groupe, type de poste, occupant si poste fixe, îlot.
 - Vue « situation actuelle » et vue « proposition », avec les positions qui changent mises en évidence.
+- Vue 3D du site : les cinq niveaux empilés en vue éclatée, chaque position en volume coloré par direction (postes fixes plus hauts, positions qui changent surélevées), étiquettes de comptage par open space et par niveau, tableau des positions par niveau et par direction, rotation et zoom à la souris ou au doigt.
 - Édition des plans : ajouter ou retirer des positions, définir des îlots et des zones (open space, bureau fermé, salle, zone à libérer), reprise du dessin Excel actuel à l'initialisation.
 
 **Données et saisie** (toutes les valeurs de l'équation sont paramétrables)
@@ -233,6 +234,7 @@ Le modèle est multi-site dès le départ : ajouter Sfax ne demande qu'un site e
 `prototype/index.html` (publiée aussi sur https://claude.ai/artifact/S5dwPRLWJgmsrA7WN6uZsA) est une page autonome construite sur les plans et les effectifs du classeur (données agrégées, aucun nom). Elle montre :
 
 - les cinq niveaux avec chaque position colorée par direction, les postes fixes marqués D ou M, les positions du support hachurées (hors équation), le centre du RDC marqué comme future salle de formation ;
+- une vue 3D du site (Three.js) : niveaux empilés en vue éclatée ou compacte, positions en volumes colorés par direction, étiquettes de comptage par open space et par niveau, tableau des positions par niveau et par direction avant → après, liste des open spaces avec leurs effectifs par direction ;
 - les paramètres modifiables par direction (CDI, externes, recrutements) et globaux (réserve, fenêtre des recrutements déclarés par mail client), avec recalcul immédiat des quotas ;
 - la proposition : positions avant et après par direction, niveaux occupés, postes partagés et taux de présence moyen maximal, liste des mouvements par niveau et par îlot, vue « changements » sur les plans.
 
