@@ -1,6 +1,6 @@
 # PrestigePlaces
 
-Étude et maquette pour une application de dispatching des positions de travail sur le site Sofrecom de Tunis : 5 niveaux, 5 directions opérationnelles, télétravail partiel, règle d'équité unique (même taux de places par personne pour chaque direction).
+Étude et maquette pour une application de dispatching des positions de travail sur le site Sofrecom de Tunis : 5 niveaux, 5 directions opérationnelles, télétravail partiel, règle d'équité unique (même taux de places par personne pour chaque direction). Déclencheur : libérer le centre du RDC, occupé par l'équipe BLI, pour en faire une salle de formation.
 
 ## Contenu
 
