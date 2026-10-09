@@ -72,7 +72,7 @@ Autres constats :
 - Les 16 positions vides sont toutes à l'étage 3.
 - Le RDC porte 39 positions dessinées mais sans affectation (38 postes et un poste manager dans la zone centrale). Si elles sont aménageables, la capacité à répartir passe à 1 086 positions et le taux commun à 81,4 %.
 - Le classeur suppose 40 % de télétravail pour les collaborateurs, 60 % pour les externes et 0 % pour les managers, les directeurs et BLI. Ce calcul donne un besoin théorique de 863 postes pour les cinq directions, soit 184 de moins que les 1 047 positions à répartir. La règle par effectif distribue toute la capacité ; chaque direction garde en interne la marge entre son quota et son besoin réel de présence.
-- Les 31 recrutements et 11 externes viennent de la colonne « Projection de croissance » du classeur. L'onglet « Externes » est vide : la liste nominative et l'horizon des recrutements restent à fixer.
+- Les 31 recrutements et 11 externes viennent de la colonne « Projection de croissance » du classeur. L'onglet « Externes » est vide : la liste nominative reste à constituer, et les 31 recrutements sont à rapprocher du backlog SIRH et des mails clients sur 3 mois.
 - Deux nuances de bleu distinguent les postes collaborateurs dans les plans (groupes d'Ammar et Béji au RDC) sans légende ; l'application devra porter ce sens dans les données, pas dans la couleur.
 
 ## Besoins fonctionnels
@@ -99,12 +99,12 @@ L'application remplace le classeur par quatre modules : les plans, les données,
 - Import de l'effectif RH (Excel ou CSV, clé matricule) avec détection des entrées et sorties entre deux imports ; le nombre de CDI par direction reste modifiable à la main pour simuler.
 - Fiche collaborateur : direction, pôle, manager, grade, taux de présence, contraintes (poste fixe, étage imposé, proximité du manager, besoin particulier).
 - Consultants externes : liste nominative ou nombre par direction, avec date de fin de mission.
-- Recrutements à venir : nombre par direction et par pôle, date d'arrivée prévue, horizon de prise en compte paramétrable (par exemple 6 mois).
+- Recrutements à venir : ceux ouverts dans le SIRH (backlog officiel) ou déclarés officiellement par le client par mail pour les 3 prochains mois, avec le nombre par direction et par pôle, la source et la date d'arrivée prévue.
 - Historique : chaque « situation » devient un scénario daté que l'on peut comparer à un autre.
 
 **Propositions de dispatching**
 
-- Calcul du quota de chaque direction selon la règle d'équité, avec les paramètres du scénario (horizon des recrutements, réserve de positions libres, positions du RDC comptabilisées ou non).
+- Calcul du quota de chaque direction selon la règle d'équité, avec les paramètres du scénario (recrutements retenus, réserve de positions libres, positions du RDC comptabilisées ou non).
 - Proposition de répartition des positions par niveau et par îlot, qui respecte les postes fixes et limite les déménagements.
 - Indicateurs : taux de chaque direction, nombre de positions qui changent de direction, nombre de niveaux par direction.
 - Validation par les directeurs, publication de la situation retenue, export Excel et PDF des plans et de la liste des mouvements.
@@ -132,7 +132,7 @@ Avec les données actuelles, r vaut 1 047 / 1 334 = 78,5 % : les 106 positions d
 
 **Paramètres du scénario**
 
-- Horizon de prise en compte des recrutements (6 mois par défaut) et des missions externes en cours à la date du calcul.
+- Recrutements comptés : uniquement ceux déjà ouverts dans l'outil SIRH (backlog officiel de recrutement) ou déclarés officiellement par le client par mail pour les 3 prochains mois ; par défaut aucun autre recrutement n'entre dans l'effectif. Missions externes en cours à la date du calcul.
 - Postes réservés (activité sur site à 100 %, équipement) comptés ou non dans le quota de leur direction.
 - Réserve de positions gardées libres pour les arrivées non prévues (0 % par défaut).
 - Prise en compte ou non des 39 positions non affectées du RDC.
@@ -220,8 +220,8 @@ Le moteur n'est appelé qu'à l'étape 2 et en lot 2 ; tout le reste (quotas, pl
 | Îlot | niveau, type (open space, bureau fermé, salle), capacité | un niveau a plusieurs îlots |
 | Position | îlot, coordonnées, type (poste, poste manager, bureau directeur), réservée ou non | un îlot a plusieurs positions |
 | Direction, pôle | code, directeur, pôle parent, hors équation ou non | un pôle appartient à une direction |
-| Personne | matricule, nom, grade (d, m, c, e), pôle, manager, site, type (CDI, externe, recrutement), dates d'arrivée et de fin, taux de présence, contraintes | une personne appartient à un pôle |
-| Scénario | nom, date, paramètres (horizon, réserve, RDC), statut (brouillon, proposé, validé, publié) | un scénario regroupe des affectations |
+| Personne | matricule, nom, grade (d, m, c, e), pôle, manager, site, type (CDI, externe, recrutement ouvert dans le SIRH ou déclaré par le client), dates d'arrivée et de fin, taux de présence, contraintes | une personne appartient à un pôle |
+| Scénario | nom, date, paramètres (recrutements retenus, réserve, RDC), statut (brouillon, proposé, validé, publié) | un scénario regroupe des affectations |
 | Affectation | scénario, position, direction ou pôle, personne si poste fixe | une position par scénario |
 | Mouvement | scénario, position, direction avant, direction après | calculé à chaque proposition |
 | Journal | auteur, action, date | sur toute modification et publication |
@@ -233,7 +233,7 @@ Le modèle est multi-site dès le départ : ajouter Sfax ne demande qu'un site e
 `prototype/index.html` (publiée aussi sur https://claude.ai/artifact/S5dwPRLWJgmsrA7WN6uZsA) est une page autonome construite sur les plans et les effectifs du classeur (données agrégées, aucun nom). Elle montre :
 
 - les cinq niveaux avec chaque position colorée par direction, les postes fixes marqués D ou M, les positions du support hachurées (hors équation) ;
-- les paramètres modifiables par direction (CDI, externes, recrutements) et globaux (réserve, positions du RDC, horizon), avec recalcul immédiat des quotas ;
+- les paramètres modifiables par direction (CDI, externes, recrutements) et globaux (réserve, positions du RDC, fenêtre des recrutements déclarés par mail client), avec recalcul immédiat des quotas ;
 - la proposition : positions avant et après par direction, niveaux occupés, postes partagés et taux de présence moyen maximal, liste des mouvements par niveau et par îlot, vue « changements » sur les plans.
 
 Pour la reconstruire à partir d'un nouveau classeur :
@@ -263,7 +263,7 @@ Le principal risque n'est pas technique : c'est l'acceptation de la règle par l
 | Point | Enjeu | Proposition |
 | --- | --- | --- |
 | Acceptation de la règle | Ammar cède 47 positions et Amine 6 au premier calcul | Présenter la règle avec la marge interne qu'elle laisse (taux moyen maximal de 77 %) et une transition en deux vagues |
-| Horizon des recrutements et des externes | Un horizon trop long gonfle les quotas, un horizon trop court les sous-estime | 6 mois glissants, déclarés par chaque directeur, revus chaque trimestre |
+| Recrutements comptés dans l'effectif | Seuls les recrutements ouverts dans le SIRH ou déclarés officiellement par le client par mail sur 3 mois entrent dans l'effectif | Export SIRH mensuel et mail client joint au scénario comme justificatif ; revue chaque trimestre |
 | 39 positions non affectées au RDC | Si elles sont aménageables, le taux commun passe de 78,5 % à 81,4 % | Trancher au cadrage avec les services généraux |
 | Postes réservés | BLI travaille sur site à 100 % ; certains postes ont un équipement dédié | Les compter dans le quota de leur direction, qui les arbitre en interne |
 | Fonctions support hors équation | Leurs 106 positions restent figées alors que leurs 78 personnes occupent 136 % de places | Revoir ce choix si leur effectif ou leurs locaux changent |
@@ -276,6 +276,6 @@ Le principal risque n'est pas technique : c'est l'acceptation de la règle par l
 Décisions attendues :
 
 - [ ] Valider la règle d'équité et le périmètre (support hors équation) en CODIR
-- [ ] Fixer l'horizon des recrutements et la liste des externes par direction
+- [ ] Extraire le backlog SIRH et les mails clients sur 3 mois, fixer la liste des externes par direction
 - [ ] Trancher le sort des 39 positions du RDC
 - [ ] Désigner l'équipe du lot 1 et le product owner
