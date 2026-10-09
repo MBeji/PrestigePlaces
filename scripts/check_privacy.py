@@ -10,6 +10,8 @@ import sys
 
 FORBIDDEN_EXT = ('.xlsx', '.xlsm', '.xls', '.csv', '.tsv', '.db', '.sqlite', '.pem', '.key', '.p12')
 ALLOWED_EMAILS = {'noreply@anthropic.com'}
+# domaines de test : adresses fictives autorisées dans les jeux d'essai
+FAKE_DOMAIN_SUFFIXES = ('.local', '.test', '.invalid', '.example', 'example.com', 'example.org', 'example.net', 'exemple.com', 'exemple.fr')
 PATTERNS = [
     (re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'), 'adresse e-mail'),
     (re.compile(r'AKIA[0-9A-Z]{16}'), 'clé AWS'),
@@ -34,7 +36,7 @@ for path in filter(None, files):
         continue
     for rx, label in PATTERNS:
         for m in rx.finditer(text):
-            if label == 'adresse e-mail' and (m.group(0).lower() in ALLOWED_EMAILS or m.group(0).endswith(('example.com', 'example.org'))):
+            if label == 'adresse e-mail' and (m.group(0).lower() in ALLOWED_EMAILS or m.group(0).lower().endswith(FAKE_DOMAIN_SUFFIXES)):
                 continue
             line = text.count('\n', 0, m.start()) + 1
             problems.append(f'{path}:{line}: {label} ({m.group(0)[:40]})')

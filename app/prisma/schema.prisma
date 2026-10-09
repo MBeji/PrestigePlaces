@@ -1,0 +1,279 @@
+// Schéma PrestigePlaces. Le provider est figé à la génération :
+// "sqlite" en développement, "postgresql" en production (voir scripts/set-db-provider.mjs
+// et la variable DB_PROVIDER dans .env.example). Le reste du schéma est identique.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanCellType {
+  wall
+  office
+  room
+  green
+  free
+  free_m
+  desk
+}
+
+// d = directeur, m = manager, c = CDI, e = consultant externe
+enum PositionKind {
+  d
+  m
+  c
+  e
+}
+
+enum PositionType {
+  POSTE
+  POSTE_MANAGER
+  BUREAU_DIRECTEUR
+}
+
+enum ScenarioStatus {
+  DRAFT
+  PROPOSED
+  VALIDATED
+  PUBLISHED
+}
+
+enum RecruitmentSource {
+  SIRH
+  MAIL_CLIENT
+}
+
+enum Role {
+  SERVICES_GENERAUX
+  DIRECTEUR
+  MANAGER
+  LECTURE
+}
+
+model Site {
+  id     String  @id @default(cuid())
+  code   String  @unique
+  name   String
+  floors Floor[]
+}
+
+model Floor {
+  id        String     @id @default(cuid())
+  siteId    String
+  site      Site       @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  code      String // RDC | 1 | 2 | 3 | 4
+  label     String
+  ord       Int
+  cells     PlanCell[]
+  islands   Island[]
+  positions Position[]
+
+  @@unique([siteId, code])
+}
+
+model PlanCell {
+  id      String       @id @default(cuid())
+  floorId String
+  floor   Floor        @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  r       Int
+  c       Int
+  type    PlanCellType
+
+  @@unique([floorId, r, c])
+}
+
+model Island {
+  id        String     @id @default(cuid())
+  floorId   String
+  floor     Floor      @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  index     Int
+  positions Position[]
+
+  @@unique([floorId, index])
+}
+
+model Position {
+  id          String       @id @default(cuid())
+  floorId     String
+  floor       Floor        @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  islandId    String?
+  island      Island?      @relation(fields: [islandId], references: [id], onDelete: SetNull)
+  r           Int
+  c           Int
+  kind        PositionKind
+  type        PositionType @default(POSTE)
+  groupCode   String // groupe d'origine (BLI, SN3, ..., SUP, V, FORMATION)
+  reserved    Boolean      @default(false)
+  zoneToFree  Boolean      @default(false)
+  assignments Assignment[]
+  movements   Movement[]
+  zones       ScenarioZone[]
+
+  @@unique([floorId, r, c])
+  @@index([groupCode])
+  @@index([islandId])
+}
+
+model Direction {
+  code       String                   @id
+  label      String
+  color      String
+  inEquation Boolean                  @default(true)
+  poles      Pole[]
+  params     ScenarioDirectionParam[]
+}
+
+model Pole {
+  id            String    @id @default(cuid())
+  groupCode     String    @unique
+  label         String
+  directionCode String
+  direction     Direction @relation(fields: [directionCode], references: [code])
+
+  @@index([directionCode])
+}
+
+model Scenario {
+  id                   String                   @id @default(cuid())
+  name                 String
+  createdAt            DateTime                 @default(now())
+  status               ScenarioStatus           @default(DRAFT)
+  isActive             Boolean                  @default(false)
+  reservePct           Float                    @default(0)
+  recruitWindowMonths  Int                      @default(3)
+  notes                String?
+  // Scénario dérivé « Proposition de <nom> » : id du scénario source (null pour un scénario de base)
+  parentId             String?
+  parent               Scenario?                @relation("ScenarioProposal", fields: [parentId], references: [id], onDelete: Cascade)
+  proposals            Scenario[]               @relation("ScenarioProposal")
+  // KPI de la dernière proposition calculée (quotas, changements, niveaux avant/après)
+  kpis                 Json?
+  zones                ScenarioZone[]
+  params               ScenarioDirectionParam[]
+  recruitments         Recruitment[]
+  externals            ExternalConsultant[]
+  assignments          Assignment[]
+  movements            Movement[]
+}
+
+// Zone à libérer supplémentaire propre à un scénario (en plus de Position.zoneToFree)
+model ScenarioZone {
+  id         String   @id @default(cuid())
+  scenarioId String
+  scenario   Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  positionId String
+  position   Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@unique([scenarioId, positionId])
+}
+
+model ScenarioDirectionParam {
+  id            String    @id @default(cuid())
+  scenarioId    String
+  scenario      Scenario  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  directionCode String
+  direction     Direction @relation(fields: [directionCode], references: [code])
+  cdi           Int       @default(0)
+  externes      Int       @default(0)
+  recrutements  Int       @default(0)
+  fixedSeats    Int       @default(0)
+
+  @@unique([scenarioId, directionCode])
+}
+
+model Recruitment {
+  id            String            @id @default(cuid())
+  scenarioId    String
+  scenario      Scenario          @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  directionCode String
+  poleCode      String?
+  count         Int
+  source        RecruitmentSource @default(SIRH)
+  expectedDate  DateTime
+  reference     String?
+
+  @@index([scenarioId, directionCode])
+}
+
+model ExternalConsultant {
+  id            String    @id @default(cuid())
+  scenarioId    String
+  scenario      Scenario  @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  directionCode String
+  poleCode      String?
+  count         Int
+  endDate       DateTime?
+
+  @@index([scenarioId, directionCode])
+}
+
+model Assignment {
+  id            String   @id @default(cuid())
+  scenarioId    String
+  scenario      Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  positionId    String
+  position      Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  directionCode String
+  personRef     String?
+
+  @@unique([scenarioId, positionId])
+  @@index([scenarioId, directionCode])
+}
+
+model Movement {
+  id            String   @id @default(cuid())
+  scenarioId    String
+  scenario      Scenario @relation(fields: [scenarioId], references: [id], onDelete: Cascade)
+  positionId    String
+  position      Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  fromDirection String
+  toDirection   String
+
+  @@unique([scenarioId, positionId])
+  @@index([scenarioId])
+}
+
+model HeadcountSnapshot {
+  id         String       @id @default(cuid())
+  importedAt DateTime     @default(now())
+  groupCode  String
+  kind       PositionKind
+  count      Int
+  site       String
+
+  @@index([site, groupCode])
+}
+
+// Optionnelle, vide par défaut : aucune donnée nominative. Le matricule est stocké haché.
+model Person {
+  id           String       @id @default(cuid())
+  matriculeHash String      @unique
+  groupCode    String
+  kind         PositionKind
+  site         String
+  presenceRate Float?
+  constraints  Json?
+}
+
+model UserRole {
+  id            String  @id @default(cuid())
+  email         String  @unique
+  role          Role
+  directionCode String?
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  actor    String
+  action   String
+  entity   String
+  entityId String?
+  at       DateTime @default(now())
+  details  Json?
+
+  @@index([entity, entityId])
+  @@index([at])
+}

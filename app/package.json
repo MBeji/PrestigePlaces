@@ -6,19 +6,39 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "db:provider": "node scripts/set-db-provider.mjs",
+    "db:generate": "npm run db:provider && prisma generate",
+    "db:push": "npm run db:provider && prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "e2e": "playwright test",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "next": "16.4.0",
+    "next-auth": "^4.24.15",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "xlsx": "^0.18.5",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@playwright/test": "^1.64.0",
+    "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
-    "typescript": "^5"
+    "prisma": "^6.19.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
