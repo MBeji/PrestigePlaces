@@ -42,6 +42,10 @@ describe("readAuthEnv()", () => {
     expect(readAuthEnv({ AUTH_DEV_LOGIN: "true" }).devMode).toBe(true);
     expect(readAuthEnv({ AUTH_DEV_MODE: "false", AUTH_DEV_LOGIN: "true" }).devMode).toBe(false);
     expect(readAuthEnv({}).devMode).toBe(false);
+    // Garde-fou : pas de connexion sans mot de passe sur un serveur de production déployé.
+    expect(readAuthEnv({ AUTH_DEV_MODE: "true", NODE_ENV: "production", NEXTAUTH_URL: "https://places.example.com" }).devMode).toBe(false);
+    expect(readAuthEnv({ AUTH_DEV_MODE: "true", NODE_ENV: "production" }).devMode).toBe(false);
+    expect(readAuthEnv({ AUTH_DEV_MODE: "true", NODE_ENV: "production", NEXTAUTH_URL: "http://localhost:3210" }).devMode).toBe(true);
   });
   it("secret de repli uniquement en mode développement", () => {
     expect(readAuthEnv({ AUTH_DEV_MODE: "true" }).secret).toBe(DEV_FALLBACK_SECRET);

@@ -13,6 +13,7 @@
     "db:generate": "npm run db:provider && prisma generate",
     "db:push": "npm run db:provider && prisma db push",
     "db:seed": "tsx prisma/seed.ts",
+    "e2e:db": "npm run db:provider && prisma db push --skip-generate && tsx prisma/seed.ts",
     "e2e": "playwright test",
     "postinstall": "prisma generate"
   },

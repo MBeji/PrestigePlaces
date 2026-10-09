@@ -124,17 +124,22 @@ export default function ParamsEditor(p: ParamsEditorProps) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((d) => (
+              {rows.map((d) => {
+                // Valeurs enregistrées (sans la saisie en cours) : référence pour détecter un changement à enregistrer.
+                const saved = p.directions.find((x) => x.directionCode === d.directionCode)!;
+                return (
                 <DirectionLine
-                  key={`${d.directionCode}-${p.directions.find((x) => x.directionCode === d.directionCode)!.cdi}-${p.directions.find((x) => x.directionCode === d.directionCode)!.externes}-${p.directions.find((x) => x.directionCode === d.directionCode)!.recrutements}`}
+                  key={`${d.directionCode}-${saved.cdi}-${saved.externes}-${saved.recrutements}`}
                   row={d}
+                  saved={saved}
                   disabled={readOnly(d.directionCode) || pending}
                   quota={quotas.quotas[d.directionCode]}
                   onDraft={(v) => setDrafts((x) => ({ ...x, [d.directionCode]: v }))}
                   onSave={(v) => exec(() => saveDirectionAction(p.scenarioId, d.directionCode, v))}
                   onError={(text) => setFeedback({ kind: "err", text })}
                 />
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -196,9 +201,10 @@ function Kpi({ label, value, hint }: { label: string; value: ReactNode; hint?: s
 }
 
 function DirectionLine({
-  row, disabled, quota, onDraft, onSave, onError,
+  row, saved, disabled, quota, onDraft, onSave, onError,
 }: {
   row: DirectionRow;
+  saved: DirectionRow;
   disabled: boolean;
   quota: number;
   onDraft: (v: { cdi: number; externes: number; recrutements: number }) => void;
@@ -207,7 +213,8 @@ function DirectionLine({
 }) {
   const [text, setText] = useState({ cdi: String(row.cdi), externes: String(row.externes), recrutements: String(row.recrutements) });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const base = { cdi: row.cdi, externes: row.externes, recrutements: row.recrutements };
+  // Comparer à la valeur enregistrée et non à `row`, qui inclut déjà la saisie en cours (sinon rien n'est jamais enregistré).
+  const base = { cdi: saved.cdi, externes: saved.externes, recrutements: saved.recrutements };
 
   const change = (field: keyof typeof text, value: string) => {
     const next = { ...text, [field]: value };

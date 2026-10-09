@@ -13,3 +13,14 @@ dev.db*
 *.tsbuildinfo
 *.xlsx
 *.xlsm
+
+# Playwright : sessions enregistrées et base dédiée
+/e2e/.auth/
+
+# Exports RH et bases locales : jamais dans git
+*.xls
+*.ods
+*.csv
+*.tsv
+*.db-wal
+*.db-shm

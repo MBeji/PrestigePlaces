@@ -60,3 +60,21 @@ Appliquer une hypothèse à la main :
 python3 -I scripts/apply_hypotheses.py        # situation.json + maquette, affiche les quotas
 node scripts/test_prototype.js prototype/index.html
 ```
+
+## Application (lot 1)
+
+L'application de dispatching est dans `app/` (Next.js, TypeScript strict, Prisma : SQLite en développement, PostgreSQL en production). Elle reprend la règle d'équité de l'étude : quotas par direction, répartition par niveau, plans interactifs, scénarios comparables, import des fichiers RH et SIRH. La documentation complète (installation, variables d'environnement, base de données, tests, comptes de développement, limites connues et lot 2) est dans [`app/README.md`](app/README.md).
+
+Commandes principales, depuis `app/` :
+
+```bash
+npm install                 # installe les dépendances et génère le client Prisma
+cp .env.example .env        # configuration locale (ignorée par git)
+npm run db:push             # crée la base SQLite (prisma/dev.db)
+npm run db:seed             # charge le site Tunis et le scénario « Situation 7 (classeur) »
+npm run dev                 # http://localhost:3000
+npm run typecheck && npm run lint && npm test   # vérifications unitaires
+npm run e2e                 # bout en bout sur une base dédiée (prisma/e2e.db), port 3210
+```
+
+Production : `DB_PROVIDER=postgresql` et `DATABASE_URL=postgresql://…` dans `.env`, puis `npm run db:generate` et `npm run db:push`. Les fichiers RH et les bases locales ne sont jamais versionnés.

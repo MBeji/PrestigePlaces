@@ -3,6 +3,8 @@
  *
  * - AUTH_DEV_MODE=true : active le fournisseur de développement (sélecteur de rôle sans mot de passe).
  *   AUTH_DEV_LOGIN est accepté comme alias historique si AUTH_DEV_MODE est absent.
+ *   Garde-fou : en production (NODE_ENV=production), il n'est actif que si NEXTAUTH_URL pointe sur
+ *   localhost ou 127.0.0.1 (tests e2e sur `next start`), jamais sur un serveur déployé.
  * - AZURE_AD_CLIENT_ID / AZURE_AD_CLIENT_SECRET / AZURE_AD_TENANT_ID : fournisseur Entra ID.
  * - NEXTAUTH_SECRET (ou AUTH_SECRET) : clé de signature des JWT, obligatoire hors mode développement.
  * - AUTH_DEFAULT_ROLE : rôle donné à un compte SSO absent de la table UserRole
@@ -28,8 +30,21 @@ function flag(value: string | undefined): boolean | undefined {
   return ["true", "1", "yes", "oui"].includes(value.trim().toLowerCase());
 }
 
+/** Vrai si NEXTAUTH_URL désigne la machine locale. */
+export function isLocalUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
 export function readAuthEnv(env: Env = process.env): AuthEnv {
-  const devMode = flag(env.AUTH_DEV_MODE) ?? flag(env.AUTH_DEV_LOGIN) ?? false;
+  const requested = flag(env.AUTH_DEV_MODE) ?? flag(env.AUTH_DEV_LOGIN) ?? false;
+  // Connexion sans mot de passe : jamais sur un serveur de production déployé.
+  const devMode = requested && (env.NODE_ENV !== "production" || isLocalUrl(env.NEXTAUTH_URL));
   const clientId = env.AZURE_AD_CLIENT_ID?.trim();
   const clientSecret = env.AZURE_AD_CLIENT_SECRET?.trim();
   const tenantId = env.AZURE_AD_TENANT_ID?.trim();
