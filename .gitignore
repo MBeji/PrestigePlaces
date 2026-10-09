@@ -1,0 +1,6 @@
+# Jamais de classeur RH nominatif dans le dépôt
+*.xlsx
+*.xlsm
+node_modules/
+__pycache__/
+.DS_Store

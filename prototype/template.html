@@ -1,0 +1,468 @@
+<title>PrestigePlaces</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: paramètres à gauche, plan au centre, résultats en bas. Données = couleurs par direction ; chrome = encre neutre froide. */
+:root {
+  --bg: #f4f5f7; --surface: #ffffff; --surface-2: #eceef2; --fg: #171a21; --fg-2: #5a6170; --line: #d7dbe2; --accent: #1f2430;
+  --room: #dfe9d9; --office: #f5dcc8; --wall: #b8bec8; --desk: #f3e3b3;
+  --c-ammar: #2a78d6; --c-boubaker: #eb6834; --c-zeineb: #1baf7a; --c-amine: #eda100; --c-beji: #e87ba4; --c-support: #6fa86f; --c-vide: #c3c2b7;
+  --good: #0ca30c; --critical: #d03b3b;
+  --font: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #15171b; --surface: #1e2127; --surface-2: #262a32; --fg: #eef0f3; --fg-2: #a6adba; --line: #343944; --accent: #e8eaee;
+  --room: #28352a; --office: #3f3028; --wall: #4a505c; --desk: #4a4126;
+  --c-ammar: #3987e5; --c-boubaker: #d95926; --c-zeineb: #199e70; --c-amine: #c98500; --c-beji: #d55181; --c-support: #4f8a4f; --c-vide: #4c5059;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #15171b; --surface: #1e2127; --surface-2: #262a32; --fg: #eef0f3; --fg-2: #a6adba; --line: #343944; --accent: #e8eaee;
+  --room: #28352a; --office: #3f3028; --wall: #4a505c; --desk: #4a4126;
+  --c-ammar: #3987e5; --c-boubaker: #d95926; --c-zeineb: #199e70; --c-amine: #c98500; --c-beji: #d55181; --c-support: #4f8a4f; --c-vide: #4c5059;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.45; margin: 0; padding-inline: 16px; padding-block: 16px 32px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+h2 { font-size: 15px; font-weight: 600; }
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; max-width: 1280px; margin: 0 auto 16px; }
+.top .sub { color: var(--fg-2); margin: 2px 0 0; }
+.kpis { display: flex; flex-wrap: wrap; gap: 8px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; min-width: 128px; }
+.kpi .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-2); }
+.kpi .v { font-size: 22px; font-weight: 600; line-height: 1.1; margin-top: 2px; }
+.kpi .v small { font-size: 12px; font-weight: 500; color: var(--fg-2); margin-left: 4px; }
+.layout { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 16px; max-width: 1280px; margin: 0 auto; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.panel.results { grid-column: 1 / -1; }
+.panel > h2 { margin-bottom: 8px; }
+.hint { color: var(--fg-2); font-size: 12.5px; margin: 0 0 10px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-2); font-weight: 500; }
+td.n, th.n { text-align: right; }
+td input[type=number] { width: 64px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--fg); font: inherit; font-family: var(--mono); font-size: 13px; text-align: right; }
+td input[type=number]:focus, button:focus-visible, .tab:focus-visible, input:focus-visible { outline: 2px solid var(--c-ammar); outline-offset: 1px; }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.tablewrap { overflow-x: auto; }
+td:first-child, th:first-child { white-space: nowrap; }
+.params-global { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: center; margin-top: 12px; font-size: 13px; }
+.params-global input[type=number] { width: 64px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface-2); color: var(--fg); font-family: var(--mono); font-size: 13px; text-align: right; }
+.params-global label { display: flex; align-items: center; gap: 8px; }
+.btn { font: inherit; font-weight: 500; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); cursor: pointer; }
+.btn:hover { border-color: var(--fg-2); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tab { font: inherit; font-weight: 500; padding: 5px 11px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--fg-2); cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent); color: var(--bg); }
+.tab:hover:not([aria-selected="true"]) { border-color: var(--line); color: var(--fg); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-weight: 500; padding: 5px 10px; border: 0; background: transparent; color: var(--fg-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--fg); }
+.planwrap { overflow-x: auto; }
+svg.plan { display: block; width: 100%; max-width: 820px; height: auto; margin: 0 auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12.5px; color: var(--fg-2); }
+.legend .sw.ring { box-shadow: 0 0 0 2px var(--fg); }
+.info { margin-top: 10px; min-height: 22px; font-size: 13px; color: var(--fg-2); font-family: var(--mono); }
+.floorsum { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 12.5px; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--surface-2); }
+.chip b { font-weight: 600; }
+.delta-pos { color: var(--good); font-weight: 600; }
+.delta-neg { color: var(--critical); font-weight: 600; }
+.delta-zero { color: var(--fg-2); }
+.results-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.moves { margin: 0; padding-left: 0; list-style: none; max-height: 360px; overflow: auto; font-size: 13px; }
+.moves li { padding: 4px 0; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: baseline; }
+.moves li .n { font-family: var(--mono); min-width: 34px; text-align: right; }
+.arrow { color: var(--fg-2); }
+.foot { max-width: 1280px; margin: 14px auto 0; color: var(--fg-2); font-size: 12.5px; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .results-grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .tab, .seg button, .btn { transition: background 120ms, color 120ms; } }
+</style>
+
+<header class="top">
+  <div>
+    <h1>PrestigePlaces</h1>
+    <p class="sub">Maquette de dispatching des positions · site de Tunis · effectifs au 30/09/2026 · fonctions support hors équation</p>
+  </div>
+  <div class="kpis" id="kpis"></div>
+</header>
+
+<main class="layout">
+  <section class="panel params" aria-labelledby="h-params">
+    <h2 id="h-params">Paramètres</h2>
+    <p class="hint">Chaque valeur est modifiable ; les quotas et la proposition se recalculent aussitôt.</p>
+    <div class="tablewrap"><table id="params-table">
+      <thead><tr><th>Direction</th><th class="n">CDI</th><th class="n">Externes</th><th class="n">Recrut.</th><th class="n">Effectif</th></tr></thead>
+      <tbody id="params-body"></tbody>
+    </table></div>
+    <div class="params-global">
+      <label for="reserve">Réserve de positions libres (%)</label><input type="number" id="reserve" min="0" max="20" step="1" value="0">
+      <label for="rdcfree">Inclure les 39 positions non affectées du RDC</label><input type="checkbox" id="rdcfree">
+      <label for="horizon">Horizon des recrutements (mois)</label><input type="number" id="horizon" min="1" max="24" step="1" value="6">
+      <span></span><button class="btn" id="reset" type="button">Revenir aux valeurs du classeur</button>
+    </div>
+  </section>
+
+  <section class="panel plans" aria-labelledby="h-plans">
+    <div class="row">
+      <div class="tabs" role="tablist" id="floor-tabs"></div>
+      <div class="seg" id="view-seg" role="group" aria-label="Vue">
+        <button type="button" data-view="current" aria-pressed="false">Situation actuelle</button>
+        <button type="button" data-view="proposed" aria-pressed="true">Proposition</button>
+        <button type="button" data-view="changes" aria-pressed="false">Changements</button>
+      </div>
+    </div>
+    <div class="planwrap"><svg class="plan" id="plan" role="img" aria-label="Plan du niveau"></svg></div>
+    <div class="legend" id="legend"></div>
+    <div class="floorsum" id="floorsum"></div>
+    <div class="info" id="info">Survolez une position pour voir son détail.</div>
+  </section>
+
+  <section class="panel results" aria-labelledby="h-results">
+    <h2 id="h-results">Proposition de dispatching</h2>
+    <p class="hint">Quota = taux commun × effectif cible, arrondi au plus fort reste. La répartition par niveau minimise les nouveaux niveaux par direction (flot à coût minimal), puis choisit les positions au plus près des équipes.</p>
+    <div class="results-grid">
+      <div class="tablewrap"><table id="results-table">
+        <thead><tr><th>Direction</th><th class="n">Positions actuelles</th><th class="n">Quota</th><th class="n">Écart</th><th>Niveaux avant → après</th><th class="n">Postes fixes</th><th class="n">Postes partagés</th><th class="n">Taux moyen max.</th></tr></thead>
+        <tbody id="results-body"></tbody>
+      </table></div>
+      <div>
+        <h3 style="font-size:14px;margin-bottom:6px">Mouvements par niveau et par îlot</h3>
+        <ul class="moves" id="moves"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+<p class="foot">Source : Situation_7_09_OCT_2026.xlsx (plans et effectifs Tunis, hors stagiaires, nettoyage et sécurité). Les positions des fonctions support (106) restent en place. Heuristique de maquette : la version cible utilise un solveur CP-SAT.</p>
+
+<script>
+const DATA = /*__DATA__*/;
+const DIRS = [
+  { id: 'AMMAR', label: 'Ammar', css: 'ammar' },
+  { id: 'BOUBAKER', label: 'Boubaker', css: 'boubaker' },
+  { id: 'ZEINEB', label: 'Zeineb', css: 'zeineb' },
+  { id: 'AMINE', label: 'Amine', css: 'amine' },
+  { id: 'BEJI', label: 'Béji', css: 'beji' },
+];
+const DIR_BY_ID = Object.fromEntries(DIRS.map(d => [d.id, d]));
+const EXTRA = { SUPPORT: { id: 'SUPPORT', label: 'Support (hors équation)', css: 'support' }, VIDE: { id: 'VIDE', label: 'Vide', css: 'vide' } };
+const GROUP_DIR = { BLI: 'AMMAR', SN3: 'AMMAR', 'AMMAR AUTRES': 'AMMAR', AGAL: 'BOUBAKER', Z: 'ZEINEB', AMINE: 'AMINE', OMEA: 'BEJI', PFS: 'BEJI', 'BEJI AUTRES': 'BEJI', SUP: 'SUPPORT', V: 'VIDE' };
+const FLOORS = ['RDC', '1', '2', '3', '4'];
+const FLOOR_LABEL = { RDC: 'RDC', 1: 'Étage 1', 2: 'Étage 2', 3: 'Étage 3', 4: 'Étage 4' };
+const KIND_LABEL = { d: 'directeur', m: 'manager', c: 'collaborateur', e: 'externe' };
+const C0 = 15, R0 = 5, NC = 44, NR = 39, S = 14;
+
+const labelOf = id => (DIR_BY_ID[id] || EXTRA[id]).label;
+const cssOf = id => (DIR_BY_ID[id] || EXTRA[id]).css;
+const cheb = (a, b) => Math.max(Math.abs(a.r - b.r), Math.abs(a.c - b.c));
+
+// ---------- données de base ----------
+function buildSeats(includeRdcFree) {
+  const seats = [];
+  for (const f of FLOORS) {
+    const cells = DATA.floors[f].cells;
+    const coded = cells.filter(x => x.t === 'seat');
+    for (const x of coded) {
+      seats.push({ id: `${f}:${x.r}:${x.c}`, floor: f, r: x.r, c: x.c, g: x.g, k: x.k, dir: GROUP_DIR[x.g], fixed: x.k === 'd' || x.k === 'm' });
+    }
+    if (includeRdcFree && f === 'RDC') {
+      for (const x of cells.filter(y => y.t === 'free')) seats.push({ id: `${f}:${x.r}:${x.c}`, floor: f, r: x.r, c: x.c, g: 'RDC libre', k: 'c', dir: 'VIDE', fixed: false, rdc: true });
+      const fm = cells.filter(y => y.t === 'free_m' && y.r === 20);
+      if (fm.length) { const x = fm.sort((a, b) => a.c - b.c)[0]; seats.push({ id: `${f}:${x.r}:${x.c}`, floor: f, r: x.r, c: x.c, g: 'RDC libre', k: 'm', dir: 'VIDE', fixed: false, rdc: true }); }
+    }
+  }
+  return seats;
+}
+function islands(seats) { // composantes à distance de Tchebychev <= 2, par niveau ; numérotées par niveau
+  const byFloor = {};
+  for (const s of seats) (byFloor[s.floor] ||= []).push(s);
+  for (const f of Object.keys(byFloor)) {
+    const arr = byFloor[f]; const parent = arr.map((_, i) => i);
+    const find = a => { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a]; } return a; };
+    for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) if (cheb(arr[i], arr[j]) <= 2) parent[find(i)] = find(j);
+    const groups = {};
+    arr.forEach((s, i) => (groups[find(i)] ||= []).push(s));
+    const ordered = Object.values(groups).sort((a, b) => Math.min(...a.map(s => s.r)) - Math.min(...b.map(s => s.r)) || Math.min(...a.map(s => s.c)) - Math.min(...b.map(s => s.c)));
+    ordered.forEach((g, i) => g.forEach(s => { s.island = i + 1; }));
+  }
+}
+function baseHeadcount() {
+  const h = {};
+  for (const d of DIRS) h[d.id] = { cdi: 0, ext: 0, rec: 0, fixed: 0 };
+  for (const [g, info] of Object.entries(DATA.groups)) {
+    const d = GROUP_DIR[g]; if (!h[d]) continue;
+    h[d].cdi += info.cdi.d + info.cdi.m + info.cdi.c;
+    h[d].ext += info.externes; h[d].rec += info.recrutements;
+    h[d].fixed += info.cdi.d + info.cdi.m;
+  }
+  return h;
+}
+
+// ---------- quotas ----------
+function largestRemainder(weights, total) {
+  const sumW = weights.reduce((a, b) => a + b, 0);
+  if (sumW <= 0) return weights.map(() => 0);
+  const raw = weights.map(w => w * total / sumW);
+  const base = raw.map(Math.floor);
+  let rest = total - base.reduce((a, b) => a + b, 0);
+  const order = raw.map((v, i) => [v - Math.floor(v), i]).sort((a, b) => b[0] - a[0]);
+  for (const [, i] of order) { if (rest <= 0) break; base[i] += 1; rest -= 1; }
+  return base;
+}
+
+// ---------- flot à coût minimal (répartition par niveau) ----------
+function minCostFlow(n, s, t, edgeList) {
+  const g = Array.from({ length: n }, () => []);
+  const refs = [];
+  for (const e of edgeList) {
+    const fwd = { v: e.v, cap: e.cap, cost: e.cost, rev: g[e.v].length, cap0: e.cap };
+    const bwd = { v: e.u, cap: 0, cost: -e.cost, rev: g[e.u].length, cap0: 0 };
+    g[e.u].push(fwd); g[e.v].push(bwd); refs.push(fwd);
+  }
+  let flow = 0;
+  for (;;) {
+    const dist = Array(n).fill(Infinity), inq = Array(n).fill(false), pn = Array(n).fill(-1), pe = Array(n).fill(-1);
+    dist[s] = 0; const q = [s]; inq[s] = true;
+    while (q.length) {
+      const u = q.shift(); inq[u] = false;
+      g[u].forEach((e, i) => { if (e.cap > 0 && dist[u] + e.cost < dist[e.v]) { dist[e.v] = dist[u] + e.cost; pn[e.v] = u; pe[e.v] = i; if (!inq[e.v]) { inq[e.v] = true; q.push(e.v); } } });
+    }
+    if (dist[t] === Infinity) break;
+    let f = Infinity;
+    for (let v = t; v !== s; v = pn[v]) f = Math.min(f, g[pn[v]][pe[v]].cap);
+    for (let v = t; v !== s; v = pn[v]) { const e = g[pn[v]][pe[v]]; e.cap -= f; g[v][e.rev].cap += f; }
+    flow += f;
+  }
+  return { flow, used: refs.map(e => e.cap0 - e.cap) };
+}
+
+// ---------- proposition ----------
+function solveFloors(ctx, allowed) {
+  const { surplus, deficit, movable, present, vides, delta, reserve, rank } = ctx;
+  const idS = {}, idF = {}, idD = {}; let nid = 2;
+  for (const d of surplus) idS[d] = nid++;
+  for (const f of FLOORS) idF[f] = nid++;
+  for (const d of deficit) idD[d] = nid++;
+  const idR = nid++;
+  const edges = [], tag = [];
+  const add = (u, v, cap, cost, t) => { if (cap > 0) { edges.push({ u, v, cap, cost }); tag.push(t); } };
+  for (const d of surplus) add(0, idS[d], -delta[d], 0, null);
+  for (const d of surplus) for (const f of FLOORS) add(idS[d], idF[f], movable[`${d}|${f}`], rank[`${d}|${f}`] || 0, { kind: 'release', d, f });
+  for (const f of FLOORS) add(0, idF[f], vides[f], 0, { kind: 'vide', f });
+  for (const f of FLOORS) for (const d of deficit) if (allowed[d].has(f)) add(idF[f], idD[d], 10000, present[`${d}|${f}`] > 0 ? 0 : 100, { kind: 'gain', d, f });
+  for (const f of FLOORS) add(idF[f], idR, 10000, 10, { kind: 'reserve', f });
+  for (const d of deficit) add(idD[d], 1, delta[d], 0, null);
+  add(idR, 1, reserve, 0, null);
+  const { flow, used } = minCostFlow(nid, 0, 1, edges);
+  const need = deficit.reduce((a, d) => a + delta[d], 0) + reserve;
+  let cost = 0; const release = {}, gain = {}, toReserve = {};
+  used.forEach((x, i) => { const t = tag[i]; if (!t || x <= 0) return; cost += x * edges[i].cost; if (t.kind === 'release') release[`${t.d}|${t.f}`] = x; if (t.kind === 'gain') gain[`${t.d}|${t.f}`] = x; if (t.kind === 'reserve') toReserve[t.f] = x; });
+  return { feasible: flow >= need, cost, release, gain, toReserve };
+}
+function propose(seats, params, reservePct) {
+  const pool = seats.filter(s => s.dir !== 'SUPPORT');
+  const P = pool.length;
+  const reserve = Math.round(P * reservePct / 100);
+  const alloc = P - reserve;
+  const N = {}; let Ntot = 0;
+  for (const d of DIRS) { N[d.id] = params[d.id].cdi + params[d.id].ext + params[d.id].rec; Ntot += N[d.id]; }
+  const quota = {}; const q = largestRemainder(DIRS.map(d => N[d.id]), alloc);
+  DIRS.forEach((d, i) => { quota[d.id] = Math.max(q[i], params[d.id].fixed); });
+  const current = {}; for (const d of DIRS) current[d.id] = 0;
+  for (const s of pool) if (current[s.dir] !== undefined) current[s.dir] += 1;
+  const delta = {}; for (const d of DIRS) delta[d.id] = quota[d.id] - current[d.id];
+
+  const surplus = DIRS.filter(d => delta[d.id] < 0).map(d => d.id);
+  const deficit = DIRS.filter(d => delta[d.id] > 0).map(d => d.id);
+  const movable = {}, present = {}, vides = {}, rank = {};
+  for (const f of FLOORS) { vides[f] = 0; for (const d of DIRS) { movable[`${d.id}|${f}`] = 0; present[`${d.id}|${f}`] = 0; } }
+  for (const s of pool) {
+    if (s.dir === 'VIDE') { vides[s.floor] += 1; continue; }
+    present[`${s.dir}|${s.floor}`] += 1;
+    if (!s.fixed) movable[`${s.dir}|${s.floor}`] += 1;
+  }
+  for (const d of surplus) FLOORS.filter(f => movable[`${d}|${f}`] > 0).sort((a, b) => present[`${d}|${a}`] - present[`${d}|${b}`]).forEach((f, i) => { rank[`${d}|${f}`] = i; });
+  const ctx = { surplus, deficit, movable, present, vides, delta, reserve, rank };
+  const supplyOn = f => vides[f] + surplus.reduce((a, d) => a + movable[`${d}|${f}`], 0);
+  // chaque direction déficitaire garde ses niveaux actuels et ouvre au plus un niveau nouveau : on énumère ce choix
+  const options = deficit.map(d => [null, ...FLOORS.filter(f => present[`${d}|${f}`] === 0 && supplyOn(f) > 0).sort((a, b) => supplyOn(b) - supplyOn(a)).slice(0, 4)]);
+  let best = null;
+  const walk = (i, choice) => {
+    if (i === deficit.length) {
+      const allowed = {}; deficit.forEach((d, j) => { allowed[d] = new Set(FLOORS.filter(f => present[`${d}|${f}`] > 0)); if (choice[j]) allowed[d].add(choice[j]); });
+      const sol = solveFloors(ctx, allowed);
+      if (sol.feasible && (!best || sol.cost < best.cost)) best = sol;
+      return;
+    }
+    for (const o of options[i]) walk(i + 1, [...choice, o]);
+  };
+  walk(0, []);
+  if (!best) { const allowed = {}; deficit.forEach(d => { allowed[d] = new Set(FLOORS); }); best = solveFloors(ctx, allowed); }
+  const { release, gain } = best;
+
+  // positions : libération au bord des équipes, reprise au plus près
+  const proposed = {}; for (const s of seats) proposed[s.id] = s.dir;
+  for (const f of FLOORS) {
+    const onFloor = pool.filter(s => s.floor === f);
+    const gainers = deficit.filter(d => gain[`${d}|${f}`]);
+    const freed = onFloor.filter(s => s.dir === 'VIDE');
+    const anchorsOf = d => { const a = onFloor.filter(s => s.dir === d); return a.length ? a : freed; };
+    for (const d of surplus) {
+      const n = release[`${d}|${f}`] || 0; if (!n) continue;
+      const mine = onFloor.filter(s => s.dir === d && !s.fixed);
+      const score = s => {
+        const near = gainers.length ? Math.min(...gainers.map(g => { const a = anchorsOf(g); return a.length ? Math.min(...a.map(x => cheb(s, x))) : 30; })) : 0;
+        const own = mine.filter(x => x !== s && cheb(s, x) <= 2).length;
+        return near * 10 + own;
+      };
+      mine.map(s => [score(s), s]).sort((a, b) => a[0] - b[0]).slice(0, n).forEach(([, s]) => { proposed[s.id] = 'VIDE'; freed.push(s); });
+    }
+    const takers = gainers.map(d => ({ d, n: gain[`${d}|${f}`] })).sort((a, b) => b.n - a.n);
+    for (const { d, n } of takers) {
+      const anchors = onFloor.filter(s => s.dir === d);
+      const left = freed.filter(s => proposed[s.id] === 'VIDE');
+      const seed = anchors.length ? null : left.slice().sort((a, b) => a.r - b.r || a.c - b.c)[0];
+      const dist = s => anchors.length ? Math.min(...anchors.map(x => cheb(s, x))) : (seed ? cheb(s, seed) : 0);
+      left.map(s => [dist(s), s]).sort((a, b) => a[0] - b[0]).slice(0, n).forEach(([, s]) => { proposed[s.id] = d; });
+    }
+  }
+  return { P, reserve, alloc, N, Ntot, quota, current, delta, proposed, rate: alloc / Ntot };
+}
+
+// ---------- état et rendu ----------
+const BASE = baseHeadcount();
+const state = { params: JSON.parse(JSON.stringify(BASE)), reserve: 0, rdcfree: false, floor: '3', view: 'proposed', seats: [], result: null };
+
+function recompute() {
+  state.seats = buildSeats(state.rdcfree);
+  islands(state.seats);
+  state.result = propose(state.seats, state.params, state.reserve);
+  renderKpis(); renderParams(); renderPlan(); renderResults();
+}
+function fmt(n) { return n.toLocaleString('fr-FR'); }
+function pct(x) { return (x * 100).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %'; }
+
+function renderKpis() {
+  const r = state.result;
+  const changes = state.seats.filter(s => r.proposed[s.id] !== s.dir && r.proposed[s.id] !== 'VIDE').length;
+  const el = document.getElementById('kpis');
+  el.innerHTML = [
+    ['Positions à répartir', fmt(r.alloc) + (r.reserve ? `<small>+ ${r.reserve} en réserve</small>` : '')],
+    ['Effectif cible', fmt(r.Ntot)],
+    ['Taux commun', pct(r.rate)],
+    ['Positions qui changent de direction', fmt(changes)],
+  ].map(([l, v]) => `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div></div>`).join('');
+}
+function renderParams() {
+  const body = document.getElementById('params-body');
+  if (!body.dataset.built) {
+    body.innerHTML = DIRS.map(d => `<tr><td><span class="sw" style="background:var(--c-${d.css})"></span>${d.label}</td>` +
+      ['cdi', 'ext', 'rec'].map(k => `<td class="n"><input type="number" min="0" step="1" id="${k}-${d.id}" data-dir="${d.id}" data-key="${k}" value="${state.params[d.id][k]}" aria-label="${k} ${d.label}"></td>`).join('') +
+      `<td class="n" id="eff-${d.id}"></td></tr>`).join('') +
+      `<tr><td><b>Total</b></td><td class="n" id="tot-cdi"></td><td class="n" id="tot-ext"></td><td class="n" id="tot-rec"></td><td class="n" id="tot-eff"></td></tr>`;
+    body.dataset.built = '1';
+    body.addEventListener('input', e => {
+      const t = e.target; if (!t.dataset.dir) return;
+      state.params[t.dataset.dir][t.dataset.key] = Math.max(0, parseInt(t.value || '0', 10));
+      scheduleRecompute();
+    });
+  }
+  let tc = 0, te = 0, tr = 0;
+  for (const d of DIRS) { const p = state.params[d.id]; document.getElementById(`eff-${d.id}`).textContent = fmt(p.cdi + p.ext + p.rec); tc += p.cdi; te += p.ext; tr += p.rec; }
+  document.getElementById('tot-cdi').textContent = fmt(tc); document.getElementById('tot-ext').textContent = fmt(te);
+  document.getElementById('tot-rec').textContent = fmt(tr); document.getElementById('tot-eff').textContent = fmt(tc + te + tr);
+}
+let timer = null;
+function scheduleRecompute() { clearTimeout(timer); timer = setTimeout(recompute, 150); }
+
+function renderPlan() {
+  const f = state.floor; const r = state.result; const view = state.view;
+  const tabs = document.getElementById('floor-tabs');
+  if (!tabs.dataset.built) {
+    tabs.innerHTML = FLOORS.map(x => `<button class="tab" role="tab" type="button" data-floor="${x}" aria-selected="false">${FLOOR_LABEL[x]}</button>`).join('');
+    tabs.addEventListener('click', e => { const b = e.target.closest('[data-floor]'); if (!b) return; state.floor = b.dataset.floor; renderPlan(); });
+    tabs.dataset.built = '1';
+  }
+  tabs.querySelectorAll('[data-floor]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.floor === f)));
+  document.querySelectorAll('#view-seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  const cells = DATA.floors[f].cells;
+  const seatById = Object.fromEntries(state.seats.filter(s => s.floor === f).map(s => [s.id, s]));
+  const X = c => (c - C0) * S, Y = rr => (rr - R0) * S;
+  let out = `<defs><pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="var(--c-support)" opacity="0.35"/><line x1="0" y1="0" x2="0" y2="4" stroke="var(--c-support)" stroke-width="1.5"/></pattern></defs>`;
+  out += `<rect x="0" y="0" width="${NC * S}" height="${NR * S}" fill="var(--surface)"/>`;
+  for (const x of cells) {
+    const px = X(x.c), py = Y(x.r);
+    if (x.t === 'wall') out += `<rect x="${px}" y="${py}" width="${S}" height="${S}" fill="none" stroke="var(--wall)" stroke-width="0.6"/>`;
+    else if (x.t === 'room') out += `<rect x="${px}" y="${py}" width="${S}" height="${S}" fill="var(--room)"/>`;
+    else if (x.t === 'green') out += `<rect x="${px}" y="${py}" width="${S}" height="${S}" fill="var(--room)" opacity="0.7"/>`;
+    else if (x.t === 'office') out += `<rect x="${px}" y="${py}" width="${S}" height="${S}" fill="var(--office)"/>`;
+    else if (x.t === 'free_m' && !seatById[`${f}:${x.r}:${x.c}`]) out += `<rect x="${px}" y="${py}" width="${S}" height="${S}" fill="var(--desk)"/>`;
+    else if (x.t === 'free' && !seatById[`${f}:${x.r}:${x.c}`]) out += `<rect x="${px + 1.5}" y="${py + 1.5}" width="${S - 3}" height="${S - 3}" rx="2" fill="none" stroke="var(--c-vide)" stroke-dasharray="2 2"/>`;
+  }
+  for (const s of Object.values(seatById)) {
+    const px = X(s.c), py = Y(s.r);
+    const cur = s.dir, prop = r.proposed[s.id];
+    const shown = view === 'current' ? cur : prop;
+    const changed = cur !== prop;
+    const dim = view === 'changes' && !changed;
+    const fill = shown === 'SUPPORT' ? 'url(#hatch)' : `var(--c-${cssOf(shown)})`;
+    const stroke = s.fixed ? `stroke="var(--fg)" stroke-width="1.2"` : (changed && view !== 'current' ? `stroke="var(--fg)" stroke-width="1.6"` : `stroke="none"`);
+    out += `<rect class="seat" data-id="${s.id}" x="${px + 1.5}" y="${py + 1.5}" width="${S - 3}" height="${S - 3}" rx="2" fill="${fill}" ${stroke} opacity="${dim ? 0.25 : 1}"/>`;
+    if (s.fixed) out += `<text x="${px + S / 2}" y="${py + S / 2 + 3}" text-anchor="middle" font-size="8" font-family="var(--mono)" font-weight="500" fill="var(--fg)" pointer-events="none" opacity="${dim ? 0.25 : 1}">${s.k.toUpperCase()}</text>`;
+  }
+  const svg = document.getElementById('plan');
+  svg.setAttribute('viewBox', `0 0 ${NC * S} ${NR * S}`);
+  svg.setAttribute('aria-label', `Plan du niveau ${FLOOR_LABEL[f]}`);
+  svg.innerHTML = out;
+  if (!svg.dataset.bound) {
+    svg.addEventListener('mousemove', e => { const t = e.target; if (t.classList && t.classList.contains('seat')) showInfo(t.dataset.id); });
+    svg.addEventListener('click', e => { const t = e.target; if (t.classList && t.classList.contains('seat')) showInfo(t.dataset.id); });
+    svg.dataset.bound = '1';
+  }
+  document.getElementById('legend').innerHTML = [...DIRS.map(d => [d.css, d.label]), ['support', 'Support (hors équation)'], ['vide', 'Vide ou réserve']]
+    .map(([c, l]) => `<span><span class="sw" style="background:var(--c-${c})"></span>${l}</span>`).join('') +
+    `<span><span class="sw" style="background:transparent;box-shadow:inset 0 0 0 1.2px var(--fg)"></span>D, M : poste fixe (directeur, manager)</span>` +
+    (view !== 'current' ? `<span><span class="sw ring" style="background:var(--surface-2)"></span>contour épais : position qui change</span>` : '') +
+    `<span><span class="sw" style="background:var(--room)"></span>salles et espaces communs</span><span><span class="sw" style="background:var(--office)"></span>bureaux de direction</span>`;
+  const sum = {}; for (const s of Object.values(seatById)) { const a = s.dir, b = r.proposed[s.id]; (sum[a] ||= { cur: 0, prop: 0 }).cur += 1; (sum[b] ||= { cur: 0, prop: 0 }).prop += 1; }
+  document.getElementById('floorsum').innerHTML = [...DIRS.map(d => d.id), 'VIDE', 'SUPPORT'].filter(id => sum[id]).map(id => {
+    const v = sum[id]; const arrow = v.cur === v.prop ? `<b>${v.cur}</b>` : `${v.cur} <span class="arrow">→</span> <b>${v.prop}</b>`;
+    return `<span class="chip"><span class="sw" style="background:var(--c-${cssOf(id)})"></span>${labelOf(id)} ${arrow}</span>`;
+  }).join('');
+}
+function showInfo(id) {
+  const s = state.seats.find(x => x.id === id); if (!s) return;
+  const prop = state.result.proposed[id];
+  const parts = [`${FLOOR_LABEL[s.floor]} · ligne ${s.r}, colonne ${s.c} · îlot ${s.island}`, `${s.g} (${labelOf(s.dir)}) · ${KIND_LABEL[s.k]}${s.fixed ? ' · poste fixe' : ''}`];
+  if (prop !== s.dir) parts.push(`proposition : ${labelOf(prop)}`); else parts.push('inchangée');
+  document.getElementById('info').textContent = parts.join('  |  ');
+}
+function renderResults() {
+  const r = state.result;
+  const floorsOf = (id, which) => FLOORS.filter(f => state.seats.some(s => s.floor === f && (which === 'cur' ? s.dir : r.proposed[s.id]) === id)).map(f => FLOOR_LABEL[f].replace('Étage ', 'É')).join(', ') || '—';
+  document.getElementById('results-body').innerHTML = DIRS.map(d => {
+    const p = state.params[d.id]; const q = r.quota[d.id]; const shared = q - p.fixed; const flex = r.N[d.id] - p.fixed; const delta = r.delta[d.id];
+    const cls = delta > 0 ? 'delta-pos' : delta < 0 ? 'delta-neg' : 'delta-zero';
+    const before = floorsOf(d.id, 'cur'), after = floorsOf(d.id, 'prop');
+    return `<tr><td><span class="sw" style="background:var(--c-${d.css})"></span>${d.label}</td><td class="n">${fmt(r.current[d.id])}</td><td class="n"><b>${fmt(q)}</b></td><td class="n ${cls}">${delta > 0 ? '+' : ''}${fmt(delta)}</td><td>${before}${before === after ? '' : ' → ' + after}</td><td class="n">${p.fixed}</td><td class="n">${fmt(shared)}</td><td class="n">${flex > 0 ? pct(shared / flex) : '—'}</td></tr>`;
+  }).join('') + `<tr><td><b>Total</b></td><td class="n">${fmt(Object.values(r.current).reduce((a, b) => a + b, 0))}</td><td class="n"><b>${fmt(r.alloc)}</b></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+  const moves = {};
+  for (const s of state.seats) { const a = s.dir, b = r.proposed[s.id]; if (a === b) continue; const k = `${s.floor}|${s.island}|${a}|${b}`; moves[k] = (moves[k] || 0) + 1; }
+  const list = Object.entries(moves).map(([k, n]) => { const [f, i, a, b] = k.split('|'); return { f, i: +i, a, b, n }; })
+    .sort((x, y) => FLOORS.indexOf(x.f) - FLOORS.indexOf(y.f) || x.i - y.i || y.n - x.n);
+  document.getElementById('moves').innerHTML = list.length ? list.map(m => `<li><span class="n">${m.n}</span><span>${FLOOR_LABEL[m.f]} · îlot ${m.i} : <span class="sw" style="background:var(--c-${cssOf(m.a)})"></span>${labelOf(m.a)} <span class="arrow">→</span> <span class="sw" style="background:var(--c-${cssOf(m.b)})"></span>${labelOf(m.b)}</span></li>`).join('') : '<li>Aucun mouvement : la situation respecte déjà les quotas.</li>';
+}
+
+document.getElementById('view-seg').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b) return; state.view = b.dataset.view; renderPlan(); });
+document.getElementById('reserve').addEventListener('input', e => { state.reserve = Math.min(20, Math.max(0, parseFloat(e.target.value || '0'))); scheduleRecompute(); });
+document.getElementById('rdcfree').addEventListener('change', e => { state.rdcfree = e.target.checked; recompute(); });
+document.getElementById('reset').addEventListener('click', () => {
+  state.params = JSON.parse(JSON.stringify(BASE)); state.reserve = 0; state.rdcfree = false;
+  document.getElementById('reserve').value = '0'; document.getElementById('rdcfree').checked = false;
+  for (const d of DIRS) for (const k of ['cdi', 'ext', 'rec']) { const el = document.getElementById(`${k}-${d.id}`); if (el) el.value = state.params[d.id][k]; }
+  recompute();
+});
+try { const saved = localStorage.getItem('pp-floor'); if (saved && FLOORS.includes(saved)) state.floor = saved; } catch (e) {}
+recompute();
+document.getElementById('floor-tabs').addEventListener('click', () => { try { localStorage.setItem('pp-floor', state.floor); } catch (e) {} });
+</script>
