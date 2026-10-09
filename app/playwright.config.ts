@@ -29,6 +29,12 @@ function chromiumPath(): string | undefined {
 
 const executablePath = chromiumPath();
 
+/**
+ * WebGL en headless : sans GPU, Chromium n'autorise le rendu logiciel (SwiftShader) qu'avec ce drapeau. La vue 3D
+ * peut ainsi monter son canvas ; les tests ne vérifient jamais le contenu rendu.
+ */
+const launchOptions = { args: ["--enable-unsafe-swiftshader"], ...(executablePath ? { executablePath } : {}) };
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -41,15 +47,15 @@ export default defineConfig({
     baseURL: BASE_URL,
     locale: "fr-FR",
     trace: "retain-on-failure",
-    launchOptions: executablePath ? { executablePath } : undefined,
+    launchOptions,
   },
   projects: [
-    { name: "setup", testMatch: /auth\.setup\.ts/, use: { ...devices["Desktop Chrome"], launchOptions: executablePath ? { executablePath } : undefined } },
+    { name: "setup", testMatch: /auth\.setup\.ts/, use: { ...devices["Desktop Chrome"], launchOptions } },
     {
       name: "chromium",
       testMatch: /.*\.spec\.ts/,
       dependencies: ["setup"],
-      use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/services-generaux.json", launchOptions: executablePath ? { executablePath } : undefined },
+      use: { ...devices["Desktop Chrome"], storageState: "e2e/.auth/services-generaux.json", launchOptions },
     },
   ],
   webServer: {

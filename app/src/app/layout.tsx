@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   // Liens masqués selon les droits (les pages et services vérifient de toute façon).
-  const hidden = session ? (can(session, "import") ? [] : ["/import"]) : ["/plans", "/parametres", "/proposition", "/scenarios", "/import"];
+  const hidden = session ? (can(session, "import") ? [] : ["/import"]) : ["/plans", "/vue-3d", "/parametres", "/proposition", "/scenarios", "/import"];
   const direction = session?.user.directionCode ? DIRECTIONS.find((d) => d.code === session.user.directionCode)?.label : undefined;
   const who = session ? `${ROLE_LABELS[session.user.role]}${direction ? ` – ${direction}` : ""}` : null;
   return (

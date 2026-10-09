@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 export const NAV_LINKS = [
   { href: "/", label: "Accueil" },
   { href: "/plans", label: "Plans" },
+  { href: "/vue-3d", label: "Vue 3D" },
   { href: "/parametres", label: "Paramètres" },
   { href: "/proposition", label: "Proposition" },
   { href: "/scenarios", label: "Scénarios" },

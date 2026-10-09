@@ -258,7 +258,7 @@ Quatre lots, dont deux suffisent pour remplacer le classeur : le lot 1 produit l
 
 Jalons : règles validées en CODIR (fin du lot 0), situation produite par l'application (fin du lot 1), taux saisis par les managers (fin du lot 2).
 
-Une première version du lot 1 a été produite le 09/10/2026 par un workflow d'agents (dossier `app/`) : socle Next.js et Prisma, moteur de dispatching testé sur les chiffres de référence, import RH, authentification Entra ID avec mode de développement, services, plans dynamiques, paramètres, proposition et scénarios, parcours de bout en bout automatisé. Elle reste à déployer et à faire valider par les services généraux.
+Une première version du lot 1 a été produite le 09/10/2026 par un workflow d'agents (dossier `app/`) : socle Next.js et Prisma, moteur de dispatching testé sur les chiffres de référence, import RH, authentification Entra ID avec mode de développement, services, plans dynamiques, vue 3D du site, paramètres, proposition et scénarios, parcours de bout en bout automatisé. Elle reste à déployer et à faire valider par les services généraux.
 
 ## Risques, hypothèses et points à arbitrer
 

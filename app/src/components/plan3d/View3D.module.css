@@ -1,0 +1,36 @@
+.panel { margin-top: 4px; }
+.h2 { font-size: 16px; margin: 0; }
+.h3 { font-size: 14px; margin: 0 0 4px; }
+.h3 + .islands { margin-top: 6px; }
+.hint { color: var(--fg-2); font-size: 12.5px; margin: 2px 0 12px; }
+.caption { color: var(--fg-2); font-size: 12px; margin: 0 0 6px; }
+.grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; }
+.sceneCol, .side { min-width: 0; }
+.tableBlock { margin-top: 16px; }
+.loading { display: flex; align-items: center; justify-content: center; height: 540px; margin: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); color: var(--fg-2); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 12.5px; color: var(--fg-2); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.tableWrap { overflow-x: auto; }
+.table { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.table th, .table td { padding: 5px 8px; white-space: nowrap; }
+.table thead th { text-transform: none; letter-spacing: 0; font-size: 12px; }
+.table tbody th { font-size: 12.5px; text-transform: none; letter-spacing: 0; color: var(--fg); font-weight: 500; }
+.table tr[aria-current="true"] { background: var(--surface-2); }
+.table .c { text-align: center; font-family: var(--mono); }
+.table thead .c { font-family: var(--font); }
+.table .total th, .table .total td { border-bottom: 0; font-weight: 600; }
+/* Défilement horizontal du tableau sur mobile : la colonne des niveaux reste visible. */
+.table { border-collapse: separate; border-spacing: 0; }
+.table th:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+.table tr[aria-current="true"] th:first-child { background: var(--surface-2); }
+.arrow { color: var(--fg-2); }
+.islands { list-style: none; margin: 0; padding: 0; max-height: 540px; overflow-y: auto; font-size: 12.5px; }
+.islands li { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.n { font-family: var(--mono); font-weight: 600; min-width: 2.5em; text-align: right; flex: none; }
+.islands :global(.sw) { width: 8px; height: 8px; }
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+  .table th:first-child { box-shadow: inset -1px 0 0 var(--line); }
+  .loading { height: 380px; }
+  .islands { max-height: 320px; }
+}

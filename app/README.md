@@ -4,6 +4,18 @@ Application de dispatching des positions de travail du site Sofrecom de Tunis. E
 
 Stack : Next.js (App Router, TypeScript strict), Prisma (SQLite en développement, PostgreSQL en production, même schéma), next-auth 4, interface en français.
 
+## Fonctionnalités
+
+| Page | Contenu |
+| --- | --- |
+| `/plans` | Plans 2D des 5 niveaux (SVG) : situation, proposition et changements, détail d'une position, salle de formation du RDC |
+| `/vue-3d` | Vue 3D du site (Three.js) : niveaux empilés en vue éclatée ou compacte, positions colorées par direction, postes fixes plus hauts, changements surélevés ; tableau « Positions par niveau et par direction » (avant → après) et open spaces avec leurs effectifs par direction (voir « Vue 3D ») |
+| `/parametres` | Effectifs par direction (CDI, externes, recrutements), réserve, fenêtre des recrutements |
+| `/proposition` | Calcul de la proposition : quotas, niveaux avant → après, mouvements |
+| `/scenarios` | Création, duplication, statuts, comparaison A/B des scénarios |
+| `/import` | Import des fichiers RH et SIRH (services généraux) |
+| `/connexion` | SSO Microsoft Entra ID ou sélecteur de rôle en développement |
+
 Aucune donnée nominative ne doit entrer dans le dépôt. Les fichiers RH (`*.xlsx`, `*.csv`, etc.) et les bases locales (`*.db`) sont ignorés par git.
 
 ## Prérequis
@@ -108,9 +120,12 @@ npm run e2e
 - prépare une base dédiée `prisma/e2e.db` (recréée sans `--force-reset`, seed idempotent) ;
 - construit l'application et la sert sur `E2E_PORT` (3210 par défaut) en mode `AUTH_DEV_MODE=true` ;
 - se connecte en « Services généraux » (fichier de session `e2e/.auth/`, ignoré par git) ;
-- n'utilise jamais `prisma/dev.db`.
+- n'utilise jamais `prisma/dev.db` ;
+- lance Chromium avec `--enable-unsafe-swiftshader` : sans GPU, WebGL passe en rendu logiciel et la vue 3D monte son canvas.
 
 Le Chromium préinstallé est détecté dans `PLAYWRIGHT_BROWSERS_PATH`, ou pris dans `PW_CHROMIUM_PATH`. Ne pas lancer `playwright install` dans l'environnement d'intégration. Le parcours vérifie sur « Situation 7 (classeur) » les quotas de référence, les changements de direction et les niveaux après proposition.
+
+`e2e/vue3d.spec.ts` couvre la vue 3D en services généraux : titre, lien actif de la navigation, tableau « Positions par niveau et par direction » avec les totaux de référence (Ammar 251 → 204, Zeineb 259 → 294, Béji 184 → 217, 1153 positions), présence du canvas et des étiquettes de niveau, changement de niveau. Il calcule la proposition si elle manque, pour rester exécutable seul (`npx playwright test e2e/vue3d.spec.ts`). Aucune assertion ne porte sur le contenu du canvas (rendu logiciel en headless).
 
 ## Comptes de développement
 
@@ -133,15 +148,15 @@ En SSO, les rôles viennent de la table `UserRole`. Les e-mails y sont enregistr
 app/
 ├── prisma/            schema.prisma (provider réécrit par db:provider), seed.ts
 ├── scripts/           set-db-provider.mjs
-├── e2e/               tests Playwright (auth.setup.ts, parcours, import)
+├── e2e/               tests Playwright (auth.setup.ts, parcours, import, vue3d)
 ├── tests/             tests Vitest : auth, engine, import, services
 ├── src/
 │   ├── app/           pages et routes (App Router)
 │   │   ├── api/       routes REST : scénarios, positions, plans, auth next-auth
 │   │   ├── connexion/ connexion (SSO et sélecteur de développement)
 │   │   ├── import/    import des fichiers RH et SIRH (server actions)
-│   │   ├── parametres/, scenarios/, plans/, proposition/
-│   ├── components/    Nav, plans SVG, paramètres, comparaison, propositions
+│   │   ├── parametres/, scenarios/, plans/, proposition/, vue-3d/
+│   ├── components/    Nav, plans SVG (plan/), vue 3D (plan3d/), paramètres, comparaison, propositions
 │   └── lib/
 │       ├── auth/      session, permissions, env, dev login
 │       ├── engine/    quotas (plus fort reste), flot à coût minimal, îlots, propose()
@@ -154,6 +169,21 @@ app/
 
 Le moteur (`lib/engine/`) reproduit la logique du prototype (`prototype/template.html`) et doit rester conforme aux résultats de référence de l'étude.
 
+## Vue 3D (`/vue-3d`)
+
+Page distincte de `/plans` (lien « Vue 3D » dans la navigation), lisible par tous les rôles (droit `lire`). Elle charge les mêmes données que `/plans` (`app/plans/load.ts` : plan de chaque niveau du scénario et de sa proposition par les services) et accepte les paramètres `scenario`, `niveau` (absent = tous les niveaux) et `vue` (`situation`, `proposition`, `changements`).
+
+- `components/plan3d/model3d.ts` : fonctions pures, testées sans WebGL (`model3d.test.ts`) : instances des positions (hauteur 1, postes fixes 1,9, changements surélevés de 0,9 et autres positions atténuées en vue changements), niveaux empilés (écart 13 en vue éclatée, 2,6 en vue compacte), décor, comptes par niveau et par direction, open spaces avant → après, ancres d'étiquettes, projection à l'écran, orbite.
+- `components/plan3d/Plan3D.tsx` : rendu Three.js (chargé par `next/dynamic` avec `ssr: false`) : un seul `InstancedMesh` coloré par instance pour les positions, couleurs lues dans les variables CSS du thème (clair ou sombre, repeint au changement), étiquettes HTML projetées, orbite à la souris et au doigt, zoom à la molette et au pincement, flèches et +/− au clavier, ressources libérées au démontage. Sans WebGL, un message remplace la scène ; les tableaux restent affichés.
+- `components/plan3d/View3D.tsx` : sélecteur de scénario, vues, tableau « Positions par niveau et par direction » et liste des open spaces (îlots numérotés de 1 à n par niveau, comme le moteur et la liste des mouvements).
+
+Lisibilité :
+
+- Cadrage : sur un cadre plus haut que large (mobile), la caméra recule (`cameraDistance`, au plus ×2) pour que les plans ne soient pas rognés sur les côtés ; le rayon logique, qui décide de l'affichage des étiquettes d'îlots, ne change pas.
+- Étiquettes : leur position est bornée au cadre (`clampLabel`), l'étiquette du niveau le plus haut ne sort donc plus par le haut de la scène.
+- Vue « Changements » : les positions inchangées sont mélangées à la couleur du fond dans l'espace sRGB (équivalent de l'opacité 0,25 du plan 2D), lisibles en thème clair comme en thème sombre.
+- Tableau : sur mobile il défile dans son cadre, la colonne des niveaux reste figée. La page elle-même ne défile jamais en largeur (vérifié à 1280 et 400 px, thèmes clair et sombre).
+
 ## Limites connues
 
 Ce lot ne couvre pas tout le périmètre de l'étude. Les points ouverts sont :
@@ -163,7 +193,8 @@ Ce lot ne couvre pas tout le périmètre de l'étude. Les points ouverts sont :
 - Taux de présence par équipe (`presence.modifier`) et contraintes par personne : non implémentés.
 - Zones à libérer d'un scénario : l'API existe (`PUT zones`), mais l'interface les liste seulement. Il manque la sélection sur le plan.
 - La page `/scenarios` n'est pas couverte par les tests e2e (création, duplication, transitions, comparaison A/B), ni la validation d'une proposition.
-- Couleurs des directions : `Direction.color` est fixe et n'est pas adapté au thème sombre.
+- Couleurs des directions : `Direction.color` est fixe. La vue 3D lit les variables du thème (`--c-ammar`…) et suit le thème sombre ; les plans 2D utilisent encore la couleur en base.
+- Vue 3D : pas de test automatisé du rendu WebGL (seuls la présence du canvas, les étiquettes HTML et les tableaux sont vérifiés). En vue compacte avec tous les niveaux, les étiquettes de niveau se chevauchent, comme dans le prototype. La liste des open spaces s'arrête aux 40 plus grands.
 - Migrations Prisma non versionnées (`db:push`). À prévoir avant la production PostgreSQL. `package.json#prisma` est déprécié au profit de `prisma.config.ts` avant Prisma 7.
 - Chromium : la révision installée ne correspond pas à celle attendue par `@playwright/test`. En CI, aligner Playwright sur le navigateur préinstallé ou définir `PW_CHROMIUM_PATH`.
 - La limite de 10 Mo des server actions pour l'import n'a pas été vérifiée avec un fichier volumineux réel.
