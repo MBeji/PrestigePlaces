@@ -4,3 +4,13 @@
 node_modules/
 __pycache__/
 .DS_Store
+
+# Application (app/)
+app/node_modules/
+app/.next/
+app/dev.db*
+app/prisma/*.db*
+app/.env
+app/.env.local
+app/test-results/
+app/playwright-report/
