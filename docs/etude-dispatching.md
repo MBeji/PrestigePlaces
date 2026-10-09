@@ -260,6 +260,16 @@ Jalons : règles validées en CODIR (fin du lot 0), situation produite par l'app
 
 Le principal risque n'est pas technique : c'est l'acceptation de la règle par les directions qui cèdent des positions. Les autres points se traitent au cadrage.
 
+**Décisions de conception prises le 09/10/2026**
+
+- Périmètre : site de Tunis, cinq directions opérationnelles ; fonctions support et leurs 106 positions hors équation.
+- Règle : même taux de positions par personne pour chaque direction, sur l'effectif CDI + externes + recrutements.
+- Recrutements comptés : ouverts dans le SIRH ou déclarés officiellement par le client par mail sur 3 mois.
+- Centre du RDC : 39 positions libérées pour la salle de formation, hors capacité ; BLI relogée.
+- Télétravail : même hypothèse pour toutes les équipes, BLI et PFS comprises.
+- Toutes les valeurs de l'équation restent paramétrables dans l'application.
+- Socle technique retenu pour le lot 1 : option A (Next.js, PostgreSQL, moteur d'optimisation), SSO Entra ID.
+
 | Point | Enjeu | Proposition |
 | --- | --- | --- |
 | Acceptation de la règle | Ammar cède 47 positions et Amine 6 au premier calcul | Présenter la règle avec la marge interne qu'elle laisse (taux moyen maximal de 77 %) et une transition en deux vagues |
