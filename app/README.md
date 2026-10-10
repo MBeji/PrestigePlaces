@@ -8,6 +8,7 @@ Stack : Next.js (App Router, TypeScript strict), Prisma (SQLite en développemen
 
 | Page | Contenu |
 | --- | --- |
+| `/` | Vue d'ensemble pour les directeurs : la règle d'équité en une phrase (positions pour 100 personnes), les chiffres de paramétrage (CDI, externes, recrutements retenus, effectif cible ; positions du site, support, zone à libérer, réserve, positions à répartir), le tableau par direction (part de l'effectif, positions attribuées, part des positions), les barres comparées et les hypothèses communes |
 | `/plans` | Plans 2D des 5 niveaux (SVG) : situation, proposition et changements, détail d'une position, salle de formation du RDC |
 | `/vue-3d` | Vue 3D du site (Three.js) : niveaux empilés en vue éclatée ou compacte, positions colorées par direction, postes fixes plus hauts, changements surélevés ; tableau « Positions par niveau et par direction » (avant → après) et open spaces avec leurs effectifs par direction (voir « Vue 3D ») |
 | `/parametres` | Effectifs par direction (CDI, externes, recrutements), réserve, fenêtre des recrutements |

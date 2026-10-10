@@ -65,6 +65,18 @@ describe("proposal.run", () => {
     expect(await prisma.auditLog.count({ where: { action: "PROPOSITION_CALCULEE" } })).toBe(2);
   }, 60_000);
 
+  it("vue d'ensemble : mêmes quotas que le moteur, sans calcul préalable", async () => {
+    user = { role: "LECTURE" };
+    const o = await svc.getOverview(baseId);
+    expect(Object.fromEntries(o.rows.map((r) => [r.code, r.quota]))).toEqual({ AMMAR: 204, BOUBAKER: 137, ZEINEB: 294, AMINE: 195, BEJI: 217 });
+    expect(o.totals.quota).toBe(o.allocated);
+    expect(o.zonePositions).toBe(39);
+    expect(o.totalPositions).toBe(o.poolPositions + o.supportPositions + o.zonePositions);
+    expect(o.changes).toBe(69);
+    expect(o.maxGap).toBeLessThan(0.01);
+    user = { role: "SERVICES_GENERAUX" };
+  });
+
   it("refuse le calcul à un rôle sans droit", async () => {
     user = { role: "MANAGER", directionCode: "BEJI" };
     await expect(svc.runProposal(baseId)).rejects.toMatchObject({ status: 403 });

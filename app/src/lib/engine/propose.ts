@@ -89,6 +89,18 @@ function floorOrder(seats: readonly Seat[], floors?: string[]): string[] {
 }
 
 /**
+ * Positions à répartir : hors zones à libérer, hors groupe SUP et direction SUPPORT, et limitées aux positions
+ * vides ou occupées par une direction de l'équation. L'ordre d'entrée est conservé.
+ */
+export function allocationPool(seats: readonly Seat[], directionCodes: readonly string[], extraZoneToFree: ReadonlySet<string> = new Set()): Seat[] {
+  const inEq = new Set(directionCodes);
+  // Les positions du groupe SUP sont hors équation même si elles sont vides : elles ne bougent jamais.
+  return seats.filter(
+    (s) => !(s.zoneToFree || extraZoneToFree.has(s.id)) && s.groupCode !== "SUP" && s.direction !== SUPPORT && (s.direction === VIDE || inEq.has(s.direction)),
+  );
+}
+
+/**
  * Proposition d'affectation (portage de `propose()` du prototype).
  *
  * 1. Pool = positions hors SUPPORT, hors zones à libérer et hors directions absentes de `directionParams`.
@@ -105,12 +117,10 @@ export function proposeAllocation(seats: readonly Seat[], directionParams: reado
   const floorIdx = new Map(FLOORS.map((f, i) => [f, i]));
   const extraZone = new Set(options.extraZoneToFree ?? []);
   const DIRS = directionParams.map((d) => d.code);
-  const inEq = new Set(DIRS);
   const isZone = (s: Seat) => s.zoneToFree || extraZone.has(s.id);
   // ordre canonique : niveau, ligne, colonne (c'est l'ordre des cellules de situation.json)
   const sorted = [...seats].sort((a, b) => (floorIdx.get(a.floor) ?? 0) - (floorIdx.get(b.floor) ?? 0) || a.r - b.r || a.c - b.c);
-  // Les positions du groupe SUP sont hors équation même si elles sont vides : elles ne bougent jamais.
-  const pool = sorted.filter((s) => !isZone(s) && s.groupCode !== "SUP" && s.direction !== SUPPORT && (s.direction === VIDE || inEq.has(s.direction)));
+  const pool = allocationPool(sorted, DIRS, extraZone);
   const locked = (s: Seat) => s.fixed || s.reserved === true;
 
   const missing = sorted.filter((s) => s.island === undefined && !isZone(s));
