@@ -7,6 +7,9 @@ export type AppSession = Session;
 
 /** Session courante (JWT enrichi : role, directionCode), ou null. Sans rôle reconnu : null. */
 export async function getSession(): Promise<AppSession | null> {
+  // Sans clé de signature (NEXTAUTH_SECRET ou AUTH_DEMO_PASSWORD), next-auth lève une erreur en production :
+  // aucune session n'est possible, la page de connexion explique quoi configurer.
+  if (!authOptions.secret) return null;
   const session = await getServerSession(authOptions);
   return session && roleOf(session) ? session : null;
 }

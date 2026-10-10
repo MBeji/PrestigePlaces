@@ -42,7 +42,7 @@ export default async function Page({ searchParams }: PageProps<"/connexion">) {
 
       {!env.secret && (
         <p role="alert" className={styles.error}>
-          NEXTAUTH_SECRET n&apos;est pas défini : aucune session ne peut être ouverte.
+          Aucune clé de session n&apos;est configurée : définissez AUTH_DEMO_PASSWORD (accès de démonstration) ou NEXTAUTH_SECRET dans les variables d&apos;environnement du serveur.
         </p>
       )}
 
