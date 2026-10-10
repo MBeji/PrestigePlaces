@@ -68,6 +68,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: "file:./e2e.db",
       DB_PROVIDER: "sqlite",
+      AUTH_REQUIRED: "true",
       AUTH_DEV_MODE: "true",
       AUTH_DEFAULT_ROLE: "LECTURE",
       NEXTAUTH_URL: BASE_URL,

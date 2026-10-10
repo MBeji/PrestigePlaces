@@ -1,12 +1,20 @@
 /** Accès à la session côté serveur et contrôles d'accès pour les server actions et routes. */
 import { getServerSession, type Session } from "next-auth";
+import { readAuthEnv } from "./env";
 import { authOptions } from "./options";
 import { can, roleOf, type Action, type AppRole, type PermissionContext } from "./permissions";
 
 export type AppSession = Session;
 
 /** Session courante (JWT enrichi : role, directionCode), ou null. Sans rôle reconnu : null. */
+/** Session utilisée quand l'application est ouverte (AUTH_REQUIRED absent ou false) : droits complets. */
+export const OPEN_SESSION: AppSession = {
+  user: { name: "Accès libre", email: null, role: "SERVICES_GENERAUX", directionCode: null },
+  expires: "9999-12-31T23:59:59.000Z",
+};
+
 export async function getSession(): Promise<AppSession | null> {
+  if (!readAuthEnv().required) return OPEN_SESSION;
   // Sans clé de signature (NEXTAUTH_SECRET ou AUTH_DEMO_PASSWORD), next-auth lève une erreur en production :
   // aucune session n'est possible, la page de connexion explique quoi configurer.
   if (!authOptions.secret) return null;

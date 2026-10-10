@@ -9,7 +9,11 @@ import { readAuthEnv } from "@/lib/auth/env";
 
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  const { secret } = readAuthEnv();
+  const { secret, required } = readAuthEnv();
+  // Application ouverte : aucune connexion demandée, la page de connexion renvoie à l'accueil.
+  if (!required) {
+    return pathname === "/connexion" ? NextResponse.redirect(new URL("/", request.url)) : NextResponse.next();
+  }
   let authenticated = false;
   if (secret) {
     try {
