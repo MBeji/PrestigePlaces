@@ -117,7 +117,7 @@ L'application remplace le classeur par quatre modules : les plans, les données,
 
 **Exigences non fonctionnelles**
 
-- Authentification par le SSO du groupe (Entra ID) et droits par rôle ; les taux de présence et contraintes individuelles sont des données personnelles, visibles du seul manager et des services généraux.
+- Application ouverte sans authentification (décision du 10/10/2026) ; l'authentification par le SSO du groupe (Entra ID) avec droits par rôle reste disponible et s'active par configuration ; les taux de présence et contraintes individuelles sont des données personnelles, visibles du seul manager et des services généraux.
 - Traçabilité de chaque modification et de chaque publication.
 - Calcul d'une proposition en moins de 10 secondes ; interface en français, utilisable sur écran et tablette.
 

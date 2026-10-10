@@ -1,6 +1,8 @@
 /**
  * Lecture des variables d'environnement d'authentification (module pur, utilisable dans le proxy).
  *
+ * - AUTH_REQUIRED=true : exige une connexion. Par défaut (absent ou false), l'application est ouverte sans
+ *   authentification : chaque visiteur a les droits complets (services généraux).
  * - AUTH_DEV_MODE=true : active le fournisseur de développement (sélecteur de rôle sans mot de passe).
  *   AUTH_DEV_LOGIN est accepté comme alias historique si AUTH_DEV_MODE est absent.
  *   Garde-fou : en production (NODE_ENV=production), il n'est actif que si NEXTAUTH_URL pointe sur
@@ -18,6 +20,8 @@ import { isRole, type AppRole } from "./permissions";
 export const DEV_FALLBACK_SECRET = "prestigeplaces-dev-secret-non-utilisable-en-production";
 
 export interface AuthEnv {
+  /** Faux : application ouverte, aucune connexion demandée. */
+  required: boolean;
   devMode: boolean;
   /** Mot de passe exigé par le sélecteur de rôle (mode démonstration), null en développement local. */
   demoPassword: string | null;
@@ -60,5 +64,6 @@ export function readAuthEnv(env: Env = process.env): AuthEnv {
     configured ?? (demoPassword ? `prestigeplaces-demo:${demoPassword}` : localDev ? DEV_FALLBACK_SECRET : undefined);
   const rawDefault = env.AUTH_DEFAULT_ROLE?.trim().toUpperCase();
   const defaultRole = rawDefault === "AUCUN" || rawDefault === "NONE" ? null : isRole(rawDefault) ? rawDefault : "LECTURE";
-  return { devMode, demoPassword: localDev ? null : demoPassword, azure, secret, defaultRole };
+  const required = flag(env.AUTH_REQUIRED) ?? false;
+  return { required, devMode, demoPassword: localDev ? null : demoPassword, azure, secret, defaultRole };
 }

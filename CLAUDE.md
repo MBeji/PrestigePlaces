@@ -26,6 +26,7 @@ Maquette publiée : https://claude.ai/artifact/S5dwPRLWJgmsrA7WN6uZsA (republier
 - Postes fixes (directeur, manager) ne changent jamais de direction. Même hypothèse de télétravail pour toutes les équipes.
 - Le centre du RDC (39 positions, ex-BLI) est une zone à libérer : salle de formation, jamais affectée.
 - Toutes les valeurs restent paramétrables dans l'application et dans la maquette.
+- L'application est ouverte, sans authentification (décision du 10/10/2026) : `AUTH_REQUIRED` absent ou `false`. Le code d'authentification (Entra ID, démonstration) reste en place et ne s'active qu'avec `AUTH_REQUIRED=true` ; les tests e2e l'activent pour vérifier les droits.
 - Correspondance groupes → directions : BLI, SN3, AMMAR AUTRES → AMMAR ; AGAL → BOUBAKER ; Z → ZEINEB ; AMINE → AMINE ; OMEA, PFS, BEJI AUTRES → BEJI ; SUP → SUPPORT ; V → vide.
 
 ## Quand l'utilisateur donne une nouvelle hypothèse (effectifs, externes, recrutements, réserve, zones)

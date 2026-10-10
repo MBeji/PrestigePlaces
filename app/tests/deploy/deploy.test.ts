@@ -27,3 +27,10 @@ describe("connexion de démonstration", () => {
     expect(readAuthEnv({ NODE_ENV: "development", AUTH_DEV_MODE: "true" }).demoPassword).toBeNull();
   });
 });
+
+describe("application ouverte", () => {
+  it("n'exige pas d'authentification par défaut", () => {
+    expect(readAuthEnv({ NODE_ENV: "production" }).required).toBe(false);
+    expect(readAuthEnv({ NODE_ENV: "production", AUTH_REQUIRED: "true" }).required).toBe(true);
+  });
+});

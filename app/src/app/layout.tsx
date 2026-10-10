@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Nav from "@/components/Nav";
-import { can, getSession, ROLE_LABELS } from "@/lib/auth";
+import { can, getSession, readAuthEnv, ROLE_LABELS } from "@/lib/auth";
 import { isDemoDatabase } from "@/lib/dbUrl";
 import { DIRECTIONS } from "@/lib/directions";
 import "./globals.css";
@@ -14,9 +14,14 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   // Liens masqués selon les droits (les pages et services vérifient de toute façon).
-  const hidden = session ? (can(session, "import") ? [] : ["/import"]) : ["/plans", "/vue-3d", "/parametres", "/proposition", "/scenarios", "/import"];
+  const open = !readAuthEnv().required;
+  const hidden = open
+    ? ["/connexion"]
+    : session
+      ? can(session, "import") ? [] : ["/import"]
+      : ["/plans", "/vue-3d", "/parametres", "/proposition", "/scenarios", "/import"];
   const direction = session?.user.directionCode ? DIRECTIONS.find((d) => d.code === session.user.directionCode)?.label : undefined;
-  const who = session ? `${ROLE_LABELS[session.user.role]}${direction ? ` – ${direction}` : ""}` : null;
+  const who = session && !open ? `${ROLE_LABELS[session.user.role]}${direction ? ` – ${direction}` : ""}` : null;
   return (
     <html lang="fr">
       <body>

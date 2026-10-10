@@ -252,7 +252,8 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 3. **Base de données**, au choix :
    - *Démonstration, sans configuration* : aucune variable de base. Le build crée et ensemence une base SQLite embarquée (`prisma/demo.db`), copiée dans `/tmp` à l'exécution. Les modifications ne sont pas conservées, un bandeau le signale.
    - *Production* : ajouter une base PostgreSQL (onglet *Storage* de Vercel, par exemple Neon) ; les variables `POSTGRES_PRISMA_URL` / `POSTGRES_URL` posées par l'intégration sont reconnues, tout comme `DATABASE_URL`. Le build pousse le schéma et n'ensemence que si la base est vide.
-4. **Variables d'environnement** (*Settings → Environment Variables*) :
+4. **Authentification** : l'application est **ouverte par défaut**, sans connexion, avec les droits complets pour chaque visiteur. Pour exiger une connexion plus tard, définir `AUTH_REQUIRED=true` et l'une des méthodes ci-dessous. Pour restreindre l'accès sans toucher au code, la protection de déploiement de Vercel (*Settings → Deployment Protection*) reste disponible.
+5. **Variables d'environnement** (*Settings → Environment Variables*), utiles seulement avec `AUTH_REQUIRED=true` :
 
 | Variable | Usage |
 | --- | --- |
