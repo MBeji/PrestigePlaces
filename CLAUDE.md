@@ -9,7 +9,8 @@ Application de dispatching des positions de travail du site Sofrecom de Tunis (5
 | `data/hypotheses.json` | **Source unique des hypothèses** : CDI par groupe, externes, recrutements (source SIRH ou MAIL_CLIENT), règles (réserve, fenêtre des recrutements, support hors équation), zones à libérer |
 | `data/situation.json` | Plans des 5 niveaux (cellules) + groupes ; **généré** par `scripts/apply_hypotheses.py` à partir des hypothèses, lu par la maquette et par le seed de l'application |
 | `prototype/template.html` → `prototype/index.html` | Maquette autonome (plans 2D, vue 3D, paramètres, proposition). `index.html` est **généré**, ne pas l'éditer à la main |
-| `app/` | Application Next.js + Prisma (lot 1). Voir `app/README.md` |
+| `app/` | Application Next.js + Prisma (lot 1). Voir `app/README.md`. Déployée sur Vercel (Root Directory = `app`, script `vercel-build`, branche de production `main`) |
+| `app/prisma/situation.json` | Copie générée de `data/situation.json`, embarquée pour le seed du déploiement |
 | `docs/etude-dispatching.md` | Étude (miroir markdown du document Claude) |
 | `scripts/` | Extraction du classeur, application des hypothèses, construction et contrôle de la maquette |
 | `.claude/` | Harnais : permissions, hooks, skills, agents, workflows |
@@ -47,7 +48,7 @@ Résultats de référence (hypothèses du 30/09/2026) : quotas AMMAR 204, BOUBAK
 - Interface, documentation et messages de commit en français. Code TypeScript strict, Python sans dépendance hors `openpyxl`.
 - Aucune donnée personnelle ni secret d'entreprise dans le projet ni dans git : pas de classeur RH (`*.xlsx`, `*.csv` ignorés), pas de nom, matricule, e-mail ou date individuelle, pas de clé ni de mot de passe. Autorisés : prénoms des directeurs, noms des projets et des équipes. `python3 -I scripts/check_privacy.py` le vérifie (CI et avant commit). L'import RH tourne dans l'application, pas dans git.
 - Ne jamais commiter `app/.env`, `app/dev.db`, `node_modules`, `.next`.
-- Commits petits et descriptifs ; la branche de travail est celle de la session ; pousser après chaque étape vérifiée.
+- Commits petits et descriptifs ; la branche de travail est celle de la session ; pousser après chaque étape vérifiée. `main` est la branche de production (déployée par Vercel) : on y arrive par pull request.
 - Les figures de l'étude (tableaux, graphiques) doivent rester cohérentes avec `data/hypotheses.json` : après un changement d'hypothèse, mettre à jour la section Analyse et la synthèse.
 
 ## Routage des modèles (sous-agents et workflows)
@@ -62,7 +63,7 @@ Les agents de `.claude/agents/` portent déjà ce routage ; les workflows de `.c
 
 ## Ce qu'il ne faut jamais faire
 
-- Modifier `prototype/index.html` ou `data/situation.json` directement (fichiers générés).
+- Modifier `prototype/index.html`, `data/situation.json` ou `app/prisma/situation.json` directement (fichiers générés).
 - Réaffecter une position SUP, une position à libérer ou un poste fixe dans une proposition.
 - Changer la règle d'équité ou le périmètre sans instruction explicite de l'utilisateur.
 - Lancer `playwright install` (Chromium est préinstallé, `PLAYWRIGHT_BROWSERS_PATH` est défini).

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import { can, getSession, ROLE_LABELS } from "@/lib/auth";
+import { isDemoDatabase } from "@/lib/dbUrl";
 import { DIRECTIONS } from "@/lib/directions";
 import "./globals.css";
 
@@ -28,6 +29,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </p>
             <Nav hidden={hidden} who={who} />
           </header>
+          {isDemoDatabase() && (
+            <p role="status" className="demo-banner">
+              Démonstration : base embarquée réinitialisée à chaque déploiement, les modifications ne sont pas conservées.
+            </p>
+          )}
           <main>{children}</main>
         </div>
       </body>

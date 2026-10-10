@@ -2,6 +2,7 @@
 import type { NextAuthOptions } from "next-auth";
 import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { parseDevLogin } from "./devLogin";
 import { readAuthEnv } from "./env";
@@ -11,6 +12,12 @@ export const DEV_PROVIDER_ID = "dev";
 export const AZURE_PROVIDER_ID = "azure-ad";
 /** Fréquence de relecture de UserRole pour une session SSO (les changements de rôle s'appliquent sans reconnexion). */
 const ROLE_REFRESH_MS = 5 * 60 * 1000;
+
+function samePassword(given: unknown, expected: string): boolean {
+  if (typeof given !== "string") return false;
+  const a = Buffer.from(given), b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 const findUserRole: UserRoleFinder = (email) =>
   prisma.userRole.findUnique({ where: { email }, select: { role: true, directionCode: true } });
@@ -51,13 +58,15 @@ export function buildAuthOptions(env = readAuthEnv()): NextAuthOptions {
     providers.push(
       CredentialsProvider({
         id: DEV_PROVIDER_ID,
-        name: "Développement",
+        name: env.demoPassword ? "Démonstration" : "Développement",
         credentials: {
           role: { label: "Rôle", type: "text" },
           directionCode: { label: "Direction", type: "text" },
           name: { label: "Nom affiché", type: "text" },
+          password: { label: "Mot de passe", type: "password" },
         },
         async authorize(credentials) {
+          if (env.demoPassword && !samePassword(credentials?.password, env.demoPassword)) return null;
           return parseDevLogin(credentials);
         },
       }),

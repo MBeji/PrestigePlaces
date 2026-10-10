@@ -69,13 +69,14 @@ export default async function Page({ searchParams }: PageProps<"/connexion">) {
         callbackUrl={callbackUrl}
         azure={!!env.azure}
         devMode={env.devMode}
+        passwordRequired={!!env.demoPassword}
         roles={ROLES.map((r) => ({ code: r, label: ROLE_LABELS[r] }))}
         directions={directions}
       />
 
       {!env.azure && !env.devMode && (
         <p className={styles.error}>
-          Aucun fournisseur d&apos;authentification n&apos;est configuré (AZURE_AD_* ou AUTH_DEV_MODE).
+          Aucun fournisseur d&apos;authentification n&apos;est configuré (AZURE_AD_*, AUTH_DEMO_PASSWORD ou AUTH_DEV_MODE).
         </p>
       )}
     </section>

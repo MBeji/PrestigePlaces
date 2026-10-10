@@ -18,7 +18,7 @@ jobs:
       - name: Régénération depuis les hypothèses
         run: python3 -I scripts/apply_hypotheses.py
       - name: Fichiers générés à jour
-        run: git diff --exit-code -- data/situation.json prototype/index.html
+        run: git diff --exit-code -- data/situation.json app/prisma/situation.json prototype/index.html
       - name: Logique de la maquette
         run: node scripts/test_prototype.js prototype/index.html
 
