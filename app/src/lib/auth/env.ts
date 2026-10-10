@@ -5,6 +5,8 @@
  *   AUTH_DEV_LOGIN est accepté comme alias historique si AUTH_DEV_MODE est absent.
  *   Garde-fou : en production (NODE_ENV=production), il n'est actif que si NEXTAUTH_URL pointe sur
  *   localhost ou 127.0.0.1 (tests e2e sur `next start`), jamais sur un serveur déployé.
+ * - AUTH_DEMO_PASSWORD : active le même sélecteur de rôle sur un serveur déployé (démonstration),
+ *   protégé par ce mot de passe partagé. Sans NEXTAUTH_SECRET, la clé de session en est dérivée.
  * - AZURE_AD_CLIENT_ID / AZURE_AD_CLIENT_SECRET / AZURE_AD_TENANT_ID : fournisseur Entra ID.
  * - NEXTAUTH_SECRET (ou AUTH_SECRET) : clé de signature des JWT, obligatoire hors mode développement.
  * - AUTH_DEFAULT_ROLE : rôle donné à un compte SSO absent de la table UserRole
@@ -17,6 +19,8 @@ export const DEV_FALLBACK_SECRET = "prestigeplaces-dev-secret-non-utilisable-en-
 
 export interface AuthEnv {
   devMode: boolean;
+  /** Mot de passe exigé par le sélecteur de rôle (mode démonstration), null en développement local. */
+  demoPassword: string | null;
   azure: { clientId: string; clientSecret: string; tenantId: string } | null;
   secret: string | undefined;
   /** null : un compte SSO inconnu de UserRole est refusé. */
@@ -44,14 +48,17 @@ export function isLocalUrl(url: string | undefined): boolean {
 export function readAuthEnv(env: Env = process.env): AuthEnv {
   const requested = flag(env.AUTH_DEV_MODE) ?? flag(env.AUTH_DEV_LOGIN) ?? false;
   // Connexion sans mot de passe : jamais sur un serveur de production déployé.
-  const devMode = requested && (env.NODE_ENV !== "production" || isLocalUrl(env.NEXTAUTH_URL));
+  const localDev = requested && (env.NODE_ENV !== "production" || isLocalUrl(env.NEXTAUTH_URL));
+  const demoPassword = env.AUTH_DEMO_PASSWORD?.trim() || null;
+  const devMode = localDev || demoPassword !== null;
   const clientId = env.AZURE_AD_CLIENT_ID?.trim();
   const clientSecret = env.AZURE_AD_CLIENT_SECRET?.trim();
   const tenantId = env.AZURE_AD_TENANT_ID?.trim();
   const azure = clientId && clientSecret && tenantId ? { clientId, clientSecret, tenantId } : null;
   const configured = env.NEXTAUTH_SECRET?.trim() || env.AUTH_SECRET?.trim() || undefined;
-  const secret = configured ?? (devMode ? DEV_FALLBACK_SECRET : undefined);
+  const secret =
+    configured ?? (demoPassword ? `prestigeplaces-demo:${demoPassword}` : localDev ? DEV_FALLBACK_SECRET : undefined);
   const rawDefault = env.AUTH_DEFAULT_ROLE?.trim().toUpperCase();
   const defaultRole = rawDefault === "AUCUN" || rawDefault === "NONE" ? null : isRole(rawDefault) ? rawDefault : "LECTURE";
-  return { devMode, azure, secret, defaultRole };
+  return { devMode, demoPassword: localDev ? null : demoPassword, azure, secret, defaultRole };
 }

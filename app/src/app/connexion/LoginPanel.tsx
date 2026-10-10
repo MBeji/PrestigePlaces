@@ -14,13 +14,16 @@ interface Props {
   callbackUrl: string;
   azure: boolean;
   devMode: boolean;
+  /** Mode démonstration : un mot de passe partagé est exigé. */
+  passwordRequired?: boolean;
   roles: Option[];
   directions: Option[];
 }
 
 const NEEDS_DIRECTION = ["DIRECTEUR", "MANAGER"];
 
-export default function LoginPanel({ signedIn, callbackUrl, azure, devMode, roles, directions }: Props) {
+export default function LoginPanel({ signedIn, callbackUrl, azure, devMode, passwordRequired = false, roles, directions }: Props) {
+  const [password, setPassword] = useState("");
   const [role, setRole] = useState("SERVICES_GENERAUX");
   const [directionCode, setDirectionCode] = useState(directions[0]?.code ?? "");
   const [pending, setPending] = useState(false);
@@ -34,6 +37,7 @@ export default function LoginPanel({ signedIn, callbackUrl, azure, devMode, role
     const res = await signIn("dev", {
       role,
       directionCode: needsDirection ? directionCode : "",
+      password,
       redirect: false,
       callbackUrl,
     });
@@ -42,7 +46,7 @@ export default function LoginPanel({ signedIn, callbackUrl, azure, devMode, role
       return;
     }
     setPending(false);
-    setError("Connexion refusée : vérifiez le rôle et la direction.");
+    setError(passwordRequired ? "Connexion refusée : vérifiez le mot de passe, le rôle et la direction." : "Connexion refusée : vérifiez le rôle et la direction.");
   }
 
   return (
@@ -69,8 +73,26 @@ export default function LoginPanel({ signedIn, callbackUrl, azure, devMode, role
 
       {devMode && (
         <form className={styles.block} onSubmit={devSignIn} aria-labelledby="dev-title">
-          <h2 id="dev-title">Mode développement</h2>
-          <p className={styles.hint}>Connexion sans mot de passe : choisissez un rôle pour tester les droits.</p>
+          <h2 id="dev-title">{passwordRequired ? "Accès de démonstration" : "Mode développement"}</h2>
+          <p className={styles.hint}>
+            {passwordRequired
+              ? "Saisissez le mot de passe de démonstration, puis choisissez un rôle."
+              : "Connexion sans mot de passe : choisissez un rôle pour tester les droits."}
+          </p>
+          {passwordRequired && (
+            <label className={styles.field}>
+              Mot de passe
+              <input
+                id="demo-password"
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+          )}
           <fieldset className={styles.roles}>
             <legend>Rôle</legend>
             {roles.map((r) => (

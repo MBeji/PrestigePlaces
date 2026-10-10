@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "db:provider": "node scripts/set-db-provider.mjs",
     "db:generate": "npm run db:provider && prisma generate",
@@ -15,7 +15,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "e2e:db": "npm run db:provider && prisma db push --skip-generate && tsx prisma/seed.ts",
     "e2e": "playwright test",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "node scripts/vercel-build.mjs"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
@@ -43,5 +44,8 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

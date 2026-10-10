@@ -28,6 +28,10 @@ for dcode, d in hyp['directions'].items():
 sit['hypotheses'] = {'asOf': hyp.get('asOf'), 'rules': hyp['rules'], 'zonesToFree': hyp.get('zonesToFree', []),
                      'directions': {k: {'label': v['label'], 'inEquation': v.get('inEquation', True)} for k, v in hyp['directions'].items()}}
 json.dump(sit, open(sit_path, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
+# copie embarquée par l'application (déploiement Vercel avec app/ comme racine)
+app_copy = os.path.join(ROOT, 'app', 'prisma', 'situation.json')
+if os.path.isdir(os.path.dirname(app_copy)):
+    json.dump(sit, open(app_copy, 'w', encoding='utf-8'), ensure_ascii=False, indent=0)
 
 # 2. contrôle : quotas équitables
 positions = {}

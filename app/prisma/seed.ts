@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PrismaClient, type PlanCellType, type PositionKind } from "@prisma/client";
 import { DIRECTIONS, EMPTY_GROUP, FORMATION_GROUP, GROUP_DIRECTION } from "../src/lib/directions";
@@ -23,7 +23,17 @@ const typeOf = (k: PositionKind) => (k === "d" ? "BUREAU_DIRECTEUR" : k === "m" 
   | "POSTE";
 
 async function main() {
-  const data: Situation = JSON.parse(readFileSync(resolve(__dirname, "../../data/situation.json"), "utf8"));
+  // Source : data/situation.json du dépôt ; copie embarquée prisma/situation.json quand l'app est déployée seule (Vercel).
+  const candidates = [resolve(__dirname, "../../data/situation.json"), resolve(__dirname, "situation.json")];
+  const source = candidates.find((p) => existsSync(p));
+  if (!source) throw new Error(`situation.json introuvable (${candidates.join(", ")})`);
+  const data: Situation = JSON.parse(readFileSync(source, "utf8"));
+
+  // SEED_IF_EMPTY=true (build de déploiement) : ne jamais écraser une base déjà initialisée.
+  if (process.env.SEED_IF_EMPTY === "true" && (await prisma.site.count({ where: { code: SITE_CODE } })) > 0) {
+    console.log("Base déjà initialisée : seed ignoré.");
+    return;
+  }
 
   // Purge contrôlée : le site Tunis (cascade sur niveaux, plans, positions, affectations) et le scénario de référence.
   await prisma.scenario.deleteMany({ where: { name: SCENARIO_NAME } });

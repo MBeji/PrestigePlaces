@@ -24,3 +24,6 @@ dev.db*
 *.tsv
 *.db-wal
 *.db-shm
+
+# Base de démonstration construite au déploiement
+prisma/demo.db*

@@ -244,3 +244,21 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Déploiement sur Vercel
+
+1. **Projet Vercel** : importer le dépôt `MBeji/PrestigePlaces`, puis dans *Settings → Build and Deployment*, régler **Root Directory = `app`**. Le framework Next.js est détecté. Vercel lance automatiquement le script `vercel-build` (`scripts/vercel-build.mjs`).
+2. **Branche de production** : `main` (*Settings → Git → Production Branch*). Chaque pull request obtient un déploiement de prévisualisation.
+3. **Base de données**, au choix :
+   - *Démonstration, sans configuration* : aucune variable de base. Le build crée et ensemence une base SQLite embarquée (`prisma/demo.db`), copiée dans `/tmp` à l'exécution. Les modifications ne sont pas conservées, un bandeau le signale.
+   - *Production* : ajouter une base PostgreSQL (onglet *Storage* de Vercel, par exemple Neon) ; les variables `POSTGRES_PRISMA_URL` / `POSTGRES_URL` posées par l'intégration sont reconnues, tout comme `DATABASE_URL`. Le build pousse le schéma et n'ensemence que si la base est vide.
+4. **Variables d'environnement** (*Settings → Environment Variables*) :
+
+| Variable | Usage |
+| --- | --- |
+| `AUTH_DEMO_PASSWORD` | Mot de passe partagé de l'accès de démonstration (sélecteur de rôle). Sans elle et sans Entra ID, personne ne peut se connecter |
+| `NEXTAUTH_SECRET` | Clé de signature des sessions (`openssl rand -base64 32`). Recommandée ; en démonstration, une clé est dérivée du mot de passe si elle manque |
+| `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, `AZURE_AD_TENANT_ID` | SSO Entra ID (production). URL de redirection : `https://<domaine>/api/auth/callback/azure-ad` |
+| `NEXTAUTH_URL` | Facultative sur Vercel (déduite du domaine) ; à fixer sur le domaine définitif quand Entra ID est utilisé |
+
+Simulation locale d'un build Vercel : `VERCEL=1 npm run vercel-build`, puis `VERCEL=1 AUTH_DEMO_PASSWORD=… npm start`.

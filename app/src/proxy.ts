@@ -13,7 +13,8 @@ export async function proxy(request: NextRequest) {
   let authenticated = false;
   if (secret) {
     try {
-      const token = await getToken({ req: request, secret });
+      // Le nom du cookie (préfixe __Secure-) dépend du protocole réellement servi, pas de l'hébergeur.
+      const token = await getToken({ req: request, secret, secureCookie: request.nextUrl.protocol === "https:" });
       authenticated = !!token?.role;
     } catch {
       authenticated = false;
