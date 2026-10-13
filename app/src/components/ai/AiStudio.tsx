@@ -1,9 +1,8 @@
 "use client";
 
-import Anthropic from "@anthropic-ai/sdk";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { simulateAction } from "@/app/scenarios-ia/actions";
-import { AI_MODELS, DEFAULT_MODEL, describeApiError, isAiModel, runAssistantTurn, type AiModelId, type AssistantContext } from "@/lib/ai/assistant";
+import { DEFAULT_MODEL, DEFAULT_PROXY_URL, describeApiError, runAssistantTurn, type AssistantContext, type ChatMessage } from "@/lib/ai/assistant";
 import { summarizeForAssistant, type SimulationInput, type SimulationResult } from "@/lib/simulation";
 import type { DirectionStyle, FloorPlanData } from "@/components/plan/model";
 import SimulationCard from "./SimulationCard";
@@ -11,6 +10,7 @@ import styles from "./ai.module.css";
 
 const KEY_STORAGE = "prestigeplaces.ia.cle";
 const MODEL_STORAGE = "prestigeplaces.ia.modele";
+const URL_STORAGE = "prestigeplaces.ia.url";
 
 const EXAMPLES = [
   "AMINE recrute 30 personnes de plus dans les 3 mois : qu'est-ce que ça change ?",
@@ -50,16 +50,17 @@ export interface AiStudioProps {
   canSave: boolean;
 }
 
-/** Saisie de la clé API, conversation avec l'assistant et scénarios calculés, dessinés sous chaque réponse. */
+/** Saisie de la LLM Proxy Clé, de l'URL du proxy et du modèle, conversation avec l'assistant et scénarios calculés, dessinés sous chaque réponse. */
 export default function AiStudio({ scenarioId, context, floors, directions, canSave }: AiStudioProps) {
   const [apiKey, setApiKey] = useState("");
   const [keyDraft, setKeyDraft] = useState("");
   const [remember, setRemember] = useState(true);
-  const [model, setModel] = useState<AiModelId>(DEFAULT_MODEL);
+  const [model, setModel] = useState(DEFAULT_MODEL);
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_PROXY_URL);
   const [prompt, setPrompt] = useState("");
   const [items, setItems] = useState<ChatItem[]>([]);
   const [busy, setBusy] = useState<null | "thinking" | "simulating">(null);
-  const history = useRef<Anthropic.Beta.BetaMessageParam[]>([]);
+  const history = useRef<ChatMessage[]>([]);
   const nextId = useRef(1);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -67,9 +68,11 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
     // Lecture après le montage : le stockage du navigateur n'existe pas au rendu serveur.
     const k = readStorage(KEY_STORAGE);
     const m = readStorage(MODEL_STORAGE);
+    const u = readStorage(URL_STORAGE);
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (k) setApiKey(k);
-    if (isAiModel(m)) setModel(m);
+    if (m) setModel(m);
+    if (u) setBaseUrl(u);
   }, []);
 
   useEffect(() => {
@@ -95,10 +98,14 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
     writeStorage(KEY_STORAGE, null);
   }
   function changeModel(m: string) {
-    if (!isAiModel(m)) return;
     setModel(m);
-    writeStorage(MODEL_STORAGE, m);
+    writeStorage(MODEL_STORAGE, m.trim() ? m : null);
   }
+  function changeUrl(u: string) {
+    setBaseUrl(u);
+    writeStorage(URL_STORAGE, u.trim() ? u : null);
+  }
+  const ready = Boolean(apiKey && baseUrl.trim() && model.trim());
   function resetConversation() {
     history.current = [];
     setItems([]);
@@ -106,7 +113,7 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
 
   async function ask(text: string) {
     const q = text.trim();
-    if (!q || !apiKey || busy) return;
+    if (!q || !ready || busy) return;
     setPrompt("");
     push({ kind: "user", text: q });
     setBusy("thinking");
@@ -114,8 +121,7 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
     history.current.push({ role: "user", content: q });
     let textId: number | null = null;
     try {
-      const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true, maxRetries: 1 });
-      await runAssistantTurn(client, model, context, history.current, {
+      await runAssistantTurn({ apiKey, baseUrl: baseUrl.trim(), model: model.trim() }, context, history.current, {
         onTextStart: () => {
           textId = push({ kind: "assistant", text: "" });
           setBusy("thinking");
@@ -148,24 +154,16 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
   return (
     <div className={styles.studio}>
       <section className={`panel ${styles.keypanel}`} aria-labelledby="ia-cle">
-        <h2 id="ia-cle">Clé API Claude</h2>
+        <h2 id="ia-cle">LLM Proxy Clé</h2>
         {apiKey ? (
           <div className={styles.keyrow}>
-            <span className={styles.keyok}>Clé enregistrée sur ce navigateur ({apiKey.slice(0, 7)}…{apiKey.slice(-4)})</span>
-            <label className={styles.inline}>
-              Modèle
-              <select value={model} onChange={(e) => changeModel(e.target.value)} aria-label="Modèle d'IA">
-                {AI_MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label}</option>
-                ))}
-              </select>
-            </label>
+            <span className={styles.keyok}>Clé enregistrée sur ce navigateur ({apiKey.slice(0, 4)}…{apiKey.slice(-4)})</span>
             <button type="button" className={styles.btn} onClick={forgetKey}>Oublier la clé</button>
           </div>
         ) : (
           <form className={styles.keyrow} onSubmit={saveKey}>
             <input
-              type="password" autoComplete="off" spellCheck={false} placeholder="sk-ant-…" aria-label="Clé API Claude"
+              type="password" autoComplete="off" spellCheck={false} placeholder="Clé de votre fournisseur ou proxy LLM" aria-label="LLM Proxy Clé"
               value={keyDraft} onChange={(e) => setKeyDraft(e.target.value)} className={styles.keyinput}
             />
             <label className={styles.inline}>
@@ -174,10 +172,27 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
             <button type="submit" className={`${styles.btn} ${styles.primary}`} disabled={!keyDraft.trim()}>Utiliser cette clé</button>
           </form>
         )}
+        <div className={styles.keyrow}>
+          <label className={styles.inline}>
+            URL du proxy
+            <input
+              type="url" spellCheck={false} value={baseUrl} onChange={(e) => changeUrl(e.target.value)} placeholder={DEFAULT_PROXY_URL}
+              aria-label="URL du proxy" className={styles.keyinput}
+            />
+          </label>
+          <label className={styles.inline}>
+            Modèle
+            <input
+              type="text" spellCheck={false} value={model} onChange={(e) => changeModel(e.target.value)} placeholder={DEFAULT_MODEL}
+              aria-label="Nom du modèle"
+            />
+          </label>
+        </div>
         <p className={styles.note}>
-          La clé reste dans votre navigateur : elle part directement vers l&apos;API Claude d&apos;Anthropic, jamais vers le serveur de
-          l&apos;application ni dans la base. Seuls des chiffres agrégés (effectifs, positions par niveau) sont envoyés, aucune donnée
-          nominative. Créez une clé sur console.anthropic.com.
+          Fonctionne avec n&apos;importe quel fournisseur ou proxy LLM compatible avec le format OpenAI (<code>/chat/completions</code>,
+          appel d&apos;outils) : indiquez son URL de base et le nom du modèle. La clé reste dans votre navigateur : elle part directement
+          vers le proxy indiqué, jamais vers le serveur de l&apos;application ni dans la base. Seuls des chiffres agrégés (effectifs,
+          positions par niveau) sont envoyés, aucune donnée nominative.
         </p>
       </section>
 
@@ -193,7 +208,7 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
             <p>Exemples de demandes, à partir du scénario « {context.scenarioName} » :</p>
             <div className={styles.examples}>
               {EXAMPLES.map((ex) => (
-                <button key={ex} type="button" className={styles.example} disabled={!apiKey || busy !== null} onClick={() => ask(ex)}>
+                <button key={ex} type="button" className={styles.example} disabled={!ready || busy !== null} onClick={() => ask(ex)}>
                   {ex}
                 </button>
               ))}
@@ -224,8 +239,8 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
         >
           <textarea
             value={prompt} onChange={(e) => setPrompt(e.target.value)} rows={2} aria-label="Votre demande"
-            placeholder={apiKey ? "Ex. : et si BOUBAKER recrutait 25 personnes et qu'on gardait 3 % de réserve ?" : "Saisissez d'abord une clé API Claude."}
-            disabled={!apiKey}
+            placeholder={ready ? "Ex. : et si BOUBAKER recrutait 25 personnes et qu'on gardait 3 % de réserve ?" : "Saisissez d'abord la LLM Proxy Clé, l'URL du proxy et le modèle."}
+            disabled={!ready}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -233,7 +248,7 @@ export default function AiStudio({ scenarioId, context, floors, directions, canS
               }
             }}
           />
-          <button type="submit" className={`${styles.btn} ${styles.primary}`} disabled={!apiKey || !prompt.trim() || busy !== null}>
+          <button type="submit" className={`${styles.btn} ${styles.primary}`} disabled={!ready || !prompt.trim() || busy !== null}>
             Simuler
           </button>
         </form>
