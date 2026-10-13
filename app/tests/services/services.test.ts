@@ -65,6 +65,29 @@ describe("proposal.run", () => {
     expect(await prisma.auditLog.count({ where: { action: "PROPOSITION_CALCULEE" } })).toBe(2);
   }, 60_000);
 
+  it("exporte la proposition en Excel : une ligne par position et des récapitulatifs", async () => {
+    const XLSX = await import("xlsx");
+    const { buildProposalWorkbook, proposalWorkbookBuffer, exportFileName } = await import("@/lib/export/proposalWorkbook");
+    const data = await svc.getProposalExport(baseId);
+    expect(data.positions.length).toBe(await prisma.position.count());
+    const wb = XLSX.read(proposalWorkbookBuffer(data), { type: "buffer" });
+    expect(wb.SheetNames).toEqual(["Positions", "Par direction", "Par équipe", "Informations"]);
+    const rows = XLSX.utils.sheet_to_json<Record<string, string | number>>(wb.Sheets.Positions);
+    expect(rows.length).toBe(data.positions.length);
+    expect(rows.filter((r) => r["Statut"] === "Change de direction" || r["Statut"] === "Attribuée").length).toBe(69);
+    expect(rows.filter((r) => r["Statut"] === "Zone à libérer").length).toBe(39);
+    // aucune position support ni poste fixe occupé ne change de direction
+    for (const r of rows) {
+      if (r["Statut"] === "Support (hors équation)" || (r["Direction actuelle"] !== "Vide" && (r["Type"] === "Directeur" || r["Type"] === "Manager")))
+        expect(r["Direction proposée"]).toBe(r["Direction actuelle"]);
+    }
+    const byDir = XLSX.utils.sheet_to_json<Record<string, string | number>>(buildProposalWorkbook(data).Sheets["Par direction"]);
+    const proposed = Object.fromEntries(byDir.map((r) => [r["Direction"], r["Positions proposées"]]));
+    expect(proposed).toMatchObject({ Ammar: 204, Boubaker: 137, Zeineb: 294, Amine: 195, "Béji": 217, Support: 106 });
+    expect(XLSX.utils.sheet_to_json(wb.Sheets["Par équipe"]).length).toBeGreaterThan(5);
+    expect(exportFileName(data.name, new Date("2026-10-13T08:00:00Z"))).toBe("proposition-situation-7-classeur-2026-10-13.xlsx");
+  }, 60_000);
+
   it("vue d'ensemble : mêmes quotas que le moteur, sans calcul préalable", async () => {
     user = { role: "LECTURE" };
     const o = await svc.getOverview(baseId);

@@ -12,7 +12,7 @@ Stack : Next.js (App Router, TypeScript strict), Prisma (SQLite en développemen
 | `/plans` | Plans 2D des 5 niveaux (SVG) : situation, proposition et changements, détail d'une position, salle de formation du RDC |
 | `/vue-3d` | Vue 3D du site (Three.js) : niveaux empilés en vue éclatée ou compacte, positions colorées par direction, postes fixes plus hauts, changements surélevés ; tableau « Positions par niveau et par direction » (avant → après) et open spaces avec leurs effectifs par direction (voir « Vue 3D ») |
 | `/parametres` | Effectifs par direction (CDI, externes, recrutements), réserve, fenêtre des recrutements |
-| `/proposition` | Calcul de la proposition : quotas, niveaux avant → après, mouvements |
+| `/proposition` | Calcul de la proposition : quotas, niveaux avant → après, mouvements ; bouton « Exporter en Excel » (`GET /api/scenarios/:id/proposal/export` : onglets Positions, Par direction, Par équipe, Informations) |
 | `/scenarios` | Création, duplication, statuts, comparaison A/B des scénarios |
 | `/import` | Import des fichiers RH et SIRH (services généraux) |
 | `/connexion` | SSO Microsoft Entra ID ou sélecteur de rôle en développement |
