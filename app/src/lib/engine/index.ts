@@ -24,7 +24,7 @@ export * from "./types";
 export { largestRemainder, computeQuotas } from "./quotas";
 export { islands } from "./islands";
 export { minCostFlow, type FlowEdge } from "./flow";
-export { solveFloors, proposeAllocation, type FloorContext, type FloorSolution } from "./propose";
+export { solveFloors, proposeAllocation, allocationPool, type FloorContext, type FloorSolution } from "./propose";
 export {
   loadSeatsFromSituation,
   directionParamsFromSituation,
