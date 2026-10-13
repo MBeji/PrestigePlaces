@@ -9,4 +9,5 @@ export * from "./scenarioParams";
 export * from "./plans";
 export * from "./proposal";
 export * from "./overview";
+export * from "./simulation";
 export { handle, readJson } from "./http";
