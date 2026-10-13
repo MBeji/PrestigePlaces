@@ -14,10 +14,21 @@ Stack : Next.js (App Router, TypeScript strict), Prisma (SQLite en développemen
 | `/parametres` | Effectifs par direction (CDI, externes, recrutements), réserve, fenêtre des recrutements |
 | `/proposition` | Calcul de la proposition : quotas, niveaux avant → après, mouvements ; bouton « Exporter en Excel » (`GET /api/scenarios/:id/proposal/export` : onglets Positions, Par direction, Par équipe, Informations) |
 | `/scenarios` | Création, duplication, statuts, comparaison A/B des scénarios |
+| `/scenarios-ia` | Scénarios en langage naturel avec Claude (voir « Scénarios IA ») : clé API saisie dans le navigateur, hypothèses calculées par le moteur, quotas avant → après, positions par niveau, plans dessinés, enregistrement comme scénario |
 | `/import` | Import des fichiers RH et SIRH (services généraux) |
 | `/connexion` | SSO Microsoft Entra ID ou sélecteur de rôle en développement |
 
 Aucune donnée nominative ne doit entrer dans le dépôt. Les fichiers RH (`*.xlsx`, `*.csv`, etc.) et les bases locales (`*.db`) sont ignorés par git.
+
+## Scénarios IA
+
+La page `/scenarios-ia` traduit une demande en langage naturel (« AMINE recrute 30 personnes de plus », « libère le niveau 4 », « garde 5 % de réserve ») en hypothèses, puis les calcule avec le moteur de dispatching sur les positions réelles du scénario choisi.
+
+- **Clé API** : chaque utilisateur saisit sa clé Claude (console.anthropic.com) dans la page. Elle reste dans le navigateur (stockage local si « Mémoriser » est coché) et part directement vers l'API d'Anthropic : elle ne passe jamais par le serveur de l'application, ni par la base, ni par git. Aucune variable d'environnement n'est nécessaire.
+- **Modèle** : Claude Opus 5.5 par défaut, Sonnet 5.5 ou Haiku 5.5 au choix. Repli automatique côté serveur d'Anthropic si le modèle décline une demande.
+- **Ce qui est envoyé** : uniquement des agrégats (effectifs par direction, positions par niveau et par direction, règles métier). Aucune donnée nominative.
+- **Calcul** : le modèle appelle l'outil `simuler_scenario` (valeurs absolues : effectifs CDI, externes, recrutements par direction, réserve, niveaux entiers à libérer). Le serveur exécute la simulation sans rien écrire (`simulateScenario`, aussi exposé en `POST /api/scenarios/:id/simulation`), renvoie les chiffres au modèle qui les commente. Les règles figées s'appliquent : support et postes fixes occupés ne bougent jamais, salle de formation jamais affectée.
+- **Enregistrement** : « Enregistrer comme scénario » crée un brouillon (droit `scenario.gerer`) avec les effectifs, la réserve et les zones à libérer de la simulation ; sa proposition se calcule ensuite dans `/proposition`.
 
 ## Prérequis
 

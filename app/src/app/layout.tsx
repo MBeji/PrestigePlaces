@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     ? ["/connexion"]
     : session
       ? can(session, "import") ? [] : ["/import"]
-      : ["/plans", "/vue-3d", "/parametres", "/proposition", "/scenarios", "/import"];
+      : ["/plans", "/vue-3d", "/parametres", "/proposition", "/scenarios", "/scenarios-ia", "/import"];
   const direction = session?.user.directionCode ? DIRECTIONS.find((d) => d.code === session.user.directionCode)?.label : undefined;
   const who = session && !open ? `${ROLE_LABELS[session.user.role]}${direction ? ` – ${direction}` : ""}` : null;
   return (

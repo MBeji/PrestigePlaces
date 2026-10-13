@@ -10,6 +10,7 @@ export const NAV_LINKS = [
   { href: "/parametres", label: "Paramètres" },
   { href: "/proposition", label: "Proposition" },
   { href: "/scenarios", label: "Scénarios" },
+  { href: "/scenarios-ia", label: "Scénarios IA" },
   { href: "/import", label: "Import" },
   { href: "/connexion", label: "Connexion" },
 ];
