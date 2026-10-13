@@ -19,7 +19,6 @@
     "vercel-build": "node scripts/vercel-build.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.133.0",
     "@prisma/client": "^6.19.3",
     "next": "16.4.0",
     "next-auth": "^4.24.15",
