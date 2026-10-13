@@ -5,6 +5,7 @@ import { proposeAllocation, seatsFromPositions, VIDE, type DirectionParam, type 
 import { DIRECTIONS } from "@/lib/directions";
 import { actorOf, audit } from "./context";
 import { cloneScenario } from "./scenarios";
+import type { ProposalExportData } from "@/lib/export/proposalWorkbook";
 import { notFound, ServiceError } from "./errors";
 
 /**
@@ -129,4 +130,34 @@ export async function getProposal(scenarioId: string): Promise<ProposalView> {
     .sort((a, b) => a.ord - b.ord || (a.island ?? 0) - (b.island ?? 0) || a.r - b.r || a.c - b.c)
     .map((m) => ({ positionId: m.positionId, floor: m.floor, r: m.r, c: m.c, kind: m.kind, island: m.island, from: m.from, to: m.to }));
   return { ...stored, scenarioId: derived.id, name: derived.name, status: derived.status, movements };
+}
+
+/**
+ * Données de l'export Excel : toutes les positions du site avec la direction du scénario source et la direction
+ * proposée, plus les quotas. Passer l'id du scénario source ou celui de la proposition. Droit : lire.
+ */
+export async function getProposalExport(scenarioId: string): Promise<ProposalExportData> {
+  const proposal = await getProposal(scenarioId);
+  const [positions, sourceRows, proposedRows, zones, poles] = await Promise.all([
+    prisma.position.findMany({
+      select: { id: true, r: true, c: true, kind: true, groupCode: true, zoneToFree: true, floor: { select: { code: true, ord: true } }, island: { select: { index: true } } },
+    }),
+    prisma.assignment.findMany({ where: { scenarioId: proposal.sourceScenarioId }, select: { positionId: true, directionCode: true } }),
+    prisma.assignment.findMany({ where: { scenarioId: proposal.scenarioId }, select: { positionId: true, directionCode: true } }),
+    prisma.scenarioZone.findMany({ where: { scenarioId: proposal.sourceScenarioId }, select: { positionId: true } }),
+    prisma.pole.findMany({ select: { groupCode: true, label: true } }),
+  ]);
+  const before = new Map(sourceRows.map((a) => [a.positionId, a.directionCode]));
+  const after = new Map(proposedRows.map((a) => [a.positionId, a.directionCode]));
+  const extraZones = new Set(zones.map((z) => z.positionId));
+  const rows = positions
+    .sort((a, b) => a.floor.ord - b.floor.ord || (a.island?.index ?? -1) - (b.island?.index ?? -1) || a.r - b.r || a.c - b.c)
+    .map((p) => ({
+      floor: p.floor.code, island: p.island ? p.island.index + 1 : null, r: p.r, c: p.c, kind: p.kind, groupCode: p.groupCode,
+      current: before.get(p.id) ?? VIDE, proposed: after.get(p.id) ?? VIDE, zoneToFree: p.zoneToFree || extraZones.has(p.id),
+    }));
+  return {
+    name: proposal.name, computedAt: proposal.computedAt, quota: proposal.quota, changes: proposal.kpis.changes,
+    teams: Object.fromEntries(poles.map((p) => [p.groupCode, p.label])), positions: rows,
+  };
 }

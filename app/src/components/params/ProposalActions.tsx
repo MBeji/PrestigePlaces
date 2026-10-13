@@ -35,6 +35,11 @@ export default function ProposalActions({
             {status === "VALIDATED" || status === "PUBLISHED" ? "Proposition validée" : "Valider"}
           </button>
         )}
+        {proposalId && (
+          <a className={styles.btn} href={`/api/scenarios/${proposalId}/proposal/export`} download>
+            Exporter en Excel
+          </a>
+        )}
         {proposalId && <Link href={`/plans?scenario=${proposalId}&vue=changements`}>Voir les changements sur les plans</Link>}
         {!canCalculate && <span className={styles.muted}>Droit « calculer une proposition » requis.</span>}
       </div>
