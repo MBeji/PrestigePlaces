@@ -210,6 +210,10 @@ Ce lot ne couvre pas tout le périmètre de l'étude. Les points ouverts sont :
 - Chromium : la révision installée ne correspond pas à celle attendue par `@playwright/test`. En CI, aligner Playwright sur le navigateur préinstallé ou définir `PW_CHROMIUM_PATH`.
 - La limite de 10 Mo des server actions pour l'import n'a pas été vérifiée avec un fichier volumineux réel.
 - Recrutements « client par mail » datés dans le passé : ils sont comptés (date ≤ fin de fenêtre). Faut-il exiger une date ≥ aujourd'hui ? À trancher avec les services généraux.
+- Dépendances (audit du 03/11/2026, `npm audit --omit=dev` : 0 vulnérabilité) :
+  - `xlsx` est installé depuis le CDN SheetJS (0.20.3). La version publiée sur npm (0.18.5) n'est plus maintenue et reste vulnérable (pollution de prototype, ReDoS) ; ne pas revenir à `npm install xlsx`.
+  - `deepmerge-ts` est forcé en 8.x via `overrides` (dépendance de la CLI Prisma 6) jusqu'au passage à Prisma 7.
+  - Restent 16 alertes modérées sur `minimatch`, uniquement dans l'outillage ESLint (dev, non déployé) : pas de correctif compatible avec ESLint 9 pour l'instant.
 
 ## Prochaines étapes (lot 2)
 
